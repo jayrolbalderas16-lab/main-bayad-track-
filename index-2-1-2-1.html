@@ -1,0 +1,2840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bayad Track</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<!-- ==================================================
+     FIREBASE SDK (compat build — works with plain <script> tags,
+     no bundler/Node.js required, safe for GitHub Pages)
+     ================================================== -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --navy:#0B2D52;
+  --navy-light:#123a68;
+  --navy-dark:#071d38;
+  --green:#35B56A;
+  --green-dark:#279456;
+  --green-light:#e8f8ef;
+  --red:#e0483e;
+  --amber:#e0a13e;
+  --gray-50:#f7f9fb;
+  --gray-100:#eef1f5;
+  --gray-200:#e2e7ed;
+  --gray-400:#9aa7b6;
+  --gray-600:#5b6b7d;
+  --gray-800:#26313e;
+  --radius:14px;
+  --shadow:0 4px 20px rgba(11,45,82,0.08);
+  --shadow-lg:0 12px 36px rgba(11,45,82,0.14);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Poppins',sans-serif;
+  background:var(--gray-50);
+  color:var(--gray-800);
+  -webkit-font-smoothing:antialiased;
+}
+a{text-decoration:none;color:inherit;}
+button{font-family:inherit;cursor:pointer;border:none;}
+input,select{font-family:inherit;}
+
+/* ---------- LOGIN PAGE ---------- */
+#login-page{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(160deg,var(--navy) 0%,var(--navy-dark) 55%,var(--navy) 100%);
+  position:relative;
+  overflow:hidden;
+  padding:24px;
+}
+#login-page::before,#login-page::after{
+  content:'';
+  position:absolute;
+  height:4px;
+  background:var(--green);
+  opacity:0.55;
+  width:140%;
+  transform:rotate(-6deg);
+}
+#login-page::before{ top:18%; left:-20%; }
+#login-page::after{ bottom:14%; left:-20%; background:var(--green-dark); opacity:0.35;}
+.login-shell{
+  display:flex;
+  width:min(920px,100%);
+  background:#fff;
+  border-radius:22px;
+  overflow:hidden;
+  box-shadow:0 30px 70px rgba(0,0,0,0.35);
+  animation:fadeUp .6s ease;
+  position:relative;
+  z-index:2;
+}
+@keyframes fadeUp{ from{opacity:0; transform:translateY(18px);} to{opacity:1; transform:translateY(0);} }
+.login-form-side{
+  flex:1;
+  padding:52px 46px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+}
+.login-logo{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:28px;
+}
+.login-logo .mark{
+  width:38px;height:38px;border-radius:10px;
+  background:linear-gradient(135deg,var(--green),var(--navy));
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:800;font-size:18px;
+}
+.login-logo .word{font-weight:800;font-size:20px;color:var(--navy);letter-spacing:.2px;}
+.login-logo .word span{color:var(--green);}
+.avatar-circle{
+  width:96px;height:96px;border-radius:50%;
+  background:var(--gray-100);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:26px;
+  border:3px solid var(--gray-200);
+}
+.avatar-circle svg{width:52px;height:52px;color:var(--gray-400);}
+.login-field{
+  width:100%;
+  text-align:left;
+  margin-bottom:16px;
+}
+.login-field label{
+  display:block;font-size:12.5px;font-weight:600;color:var(--gray-600);margin-bottom:6px;
+}
+.login-field input{
+  width:100%;
+  padding:12px 14px;
+  border:1.5px solid var(--gray-200);
+  border-radius:10px;
+  font-size:14px;
+  outline:none;
+  transition:box-shadow .2s, border-color .2s;
+}
+.login-field input:focus{
+  border-color:var(--green);
+  box-shadow:0 0 0 4px rgba(53,181,106,0.15);
+}
+.login-field-password-wrap{
+  position:relative;
+  width:100%;
+}
+.login-field-password-wrap input{
+  padding-right:44px;
+}
+.password-toggle-btn{
+  position:absolute;
+  right:6px;
+  top:50%;
+  transform:translateY(-50%);
+  background:transparent;
+  border:none;
+  padding:6px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--gray-400);
+  border-radius:6px;
+}
+.password-toggle-btn:hover{ color:var(--gray-600); }
+.password-toggle-btn svg{ width:18px;height:18px; }
+.login-divider{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  width:100%;
+  margin:18px 0;
+  font-size:11.5px;
+  font-weight:700;
+  color:var(--gray-400);
+  letter-spacing:.5px;
+}
+.login-divider::before,.login-divider::after{
+  content:'';
+  flex:1;
+  height:1px;
+  background:var(--gray-200);
+}
+.btn-signin{
+  width:100%;
+  padding:13px;
+  background:var(--navy);
+  color:#fff;
+  border-radius:10px;
+  font-weight:600;
+  font-size:14.5px;
+  margin-top:8px;
+  transition:transform .15s ease, background .2s ease;
+}
+.btn-signin:hover{ background:var(--navy-light); transform:translateY(-1px); }
+.btn-signin:active{ transform:translateY(0); }
+.forgot-link{
+  margin-top:14px;font-size:12.5px;color:var(--gray-600);
+}
+.forgot-link a{ color:var(--green-dark); font-weight:600; }
+.login-hint{
+  margin-top:22px;
+  font-size:11.5px;
+  color:var(--gray-400);
+  background:var(--gray-50);
+  border-radius:8px;
+  padding:10px 12px;
+  line-height:1.5;
+}
+.login-error{
+  width:100%;
+  background:#fdeceb;
+  color:var(--red);
+  font-size:12.5px;
+  font-weight:600;
+  padding:9px 12px;
+  border-radius:8px;
+  margin-bottom:14px;
+  display:none;
+}
+.login-illustration-side{
+  flex:1;
+  background:linear-gradient(160deg,var(--navy) 0%,var(--navy-dark) 100%);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  padding:40px;
+}
+.login-illustration-side::before{
+  content:'';
+  position:absolute;
+  width:70%;height:2px;background:var(--green);
+  opacity:.5; top:30%; transform:rotate(-8deg);
+}
+.login-illustration-side::after{
+  content:'';
+  position:absolute;
+  width:60%;height:2px;background:var(--green);
+  opacity:.3; bottom:26%; transform:rotate(-8deg);
+}
+.illustration-content{ text-align:center; color:#fff; position:relative; z-index:2; }
+.illustration-mark{
+  width:130px;height:130px;border-radius:32px;
+  background:rgba(255,255,255,0.08);
+  border:1.5px solid rgba(255,255,255,0.18);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 22px;
+}
+.illustration-mark svg{width:64px;height:64px;color:var(--green);}
+.illustration-content h2{font-size:22px;font-weight:700;margin-bottom:8px;}
+.illustration-content p{font-size:13px;color:#c7d3e0;max-width:230px;margin:0 auto;}
+@media(max-width:760px){
+  .login-illustration-side{display:none;}
+  .login-form-side{padding:40px 26px;}
+}
+
+/* ---------- APP SHELL ---------- */
+#app{display:none;min-height:100vh;}
+.app-shell{display:flex;min-height:100vh;}
+.sidebar{
+  width:240px;
+  background:var(--navy);
+  color:#fff;
+  display:flex;
+  flex-direction:column;
+  position:fixed;
+  top:0;left:0;bottom:0;
+  z-index:50;
+  transition:transform .25s ease;
+}
+.sidebar-logo{
+  padding:22px 22px 18px;
+  display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.sidebar-logo .mark{
+  width:34px;height:34px;border-radius:9px;
+  background:linear-gradient(135deg,var(--green),#1c7c46);
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;
+}
+.sidebar-logo .word{font-weight:800;font-size:16.5px;}
+.sidebar-logo .word span{color:var(--green);}
+.sidebar-nav{ flex:1; padding:16px 12px; overflow-y:auto;}
+.sidebar-nav .nav-item{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 14px;
+  border-radius:10px;
+  font-size:13.5px;font-weight:500;
+  color:#c7d3e0;
+  margin-bottom:3px;
+  cursor:pointer;
+  transition:background .18s ease, color .18s ease;
+  position:relative;
+}
+.sidebar-nav .nav-item svg{width:18px;height:18px;flex-shrink:0;}
+.sidebar-nav .nav-item:hover{ background:rgba(255,255,255,0.06); color:#fff; }
+.sidebar-nav .nav-item.active{
+  background:var(--green);
+  color:#fff;
+  font-weight:600;
+}
+.sidebar-foot{ padding:14px 12px 20px; border-top:1px solid rgba(255,255,255,0.08);}
+.sidebar-foot .nav-item{ color:#c7d3e0; }
+.sidebar-foot .nav-item:hover{ background:rgba(224,72,62,0.18); color:#ff9a92; }
+
+/* ---------- ADMIN PANEL (Admin-only nav/UI additions) ---------- */
+.sidebar-section-label{
+  padding:14px 14px 6px; font-size:10.5px; font-weight:700; letter-spacing:1px;
+  color:#7c8ba0; text-transform:uppercase;
+}
+.sidebar.is-admin{ background:var(--navy-dark); }
+.sidebar.is-admin .sidebar-logo{ border-bottom-color:rgba(53,181,106,0.25); }
+.admin-tag{
+  display:inline-flex; align-items:center; gap:5px; padding:3px 9px 3px 7px;
+  border-radius:20px; background:#e7edff; color:#2f4fd1; font-size:10.5px; font-weight:700;
+  letter-spacing:.3px; text-transform:uppercase;
+}
+.admin-tag svg{ width:11px;height:11px; }
+.role-pill{ padding:3px 9px; border-radius:20px; font-size:10.5px; font-weight:700; display:inline-block; }
+.role-pill.admin{ background:#e7edff; color:#2f4fd1; }
+.role-pill.participant{ background:var(--gray-100); color:var(--gray-600); }
+.admin-grid-6{ display:grid; grid-template-columns:repeat(6,1fr); gap:16px; margin-bottom:24px;}
+@media(max-width:1300px){ .admin-grid-6{ grid-template-columns:repeat(3,1fr);} }
+@media(max-width:640px){ .admin-grid-6{ grid-template-columns:repeat(2,1fr);} }
+.activity-feed{ display:flex; flex-direction:column; gap:0; }
+.activity-row{
+  display:flex; align-items:flex-start; gap:12px; padding:12px 4px; border-bottom:1px solid var(--gray-100);
+}
+.activity-row:last-child{ border-bottom:none; }
+.activity-row .dot{
+  width:8px;height:8px;border-radius:50%;background:var(--green); margin-top:6px; flex-shrink:0;
+}
+.activity-row .body{ flex:1; }
+.activity-row .action{ font-size:13px; font-weight:600; color:var(--gray-800); }
+.activity-row .meta{ font-size:11.5px; color:var(--gray-600); margin-top:2px; }
+.info-list{ display:flex; flex-direction:column; gap:0; }
+.info-list .info-row{ display:flex; justify-content:space-between; gap:16px; padding:12px 4px; border-bottom:1px solid var(--gray-100); font-size:13px;}
+.info-list .info-row:last-child{ border-bottom:none; }
+.info-list .info-row .k{ color:var(--gray-600); font-weight:600; }
+.info-list .info-row .v{ color:var(--gray-800); font-weight:600; text-align:right; }
+.security-item{ display:flex; gap:12px; padding:14px 4px; border-bottom:1px solid var(--gray-100); }
+.security-item:last-child{ border-bottom:none; }
+.security-item .icon{ width:34px;height:34px;border-radius:9px;background:var(--green-light);color:var(--green-dark);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.security-item .icon svg{width:17px;height:17px;}
+.security-item h4{ font-size:13px;font-weight:700;color:var(--gray-800);margin-bottom:2px;}
+.security-item p{ font-size:12px;color:var(--gray-600); }
+
+.main{
+  margin-left:240px;
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+  width:calc(100% - 240px);
+}
+.topbar{
+  height:66px;
+  background:#fff;
+  border-bottom:1px solid var(--gray-200);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 28px;
+  position:sticky;top:0;z-index:30;
+}
+.topbar-title{font-size:19px;font-weight:700;color:var(--navy);}
+.topbar-right{display:flex;align-items:center;gap:14px;}
+.menu-toggle{ display:none; background:none; font-size:22px; color:var(--navy); }
+.topbar-user{
+  display:flex;align-items:center;gap:9px;
+  font-size:13px;font-weight:600;color:var(--gray-800);
+}
+.topbar-user .dot{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--green-light);color:var(--green-dark);
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;
+}
+.content{ padding:26px 28px 60px; flex:1; }
+.view{ display:none; animation:fadeIn .35s ease; }
+.view.active{ display:block; }
+@keyframes fadeIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+.view-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; flex-wrap:wrap; gap:12px;}
+.view-header h1{ font-size:22px; font-weight:700; color:var(--navy);}
+.view-header p{ font-size:13px; color:var(--gray-600); margin-top:3px;}
+
+.btn{
+  padding:10px 18px; border-radius:9px; font-size:13.5px; font-weight:600;
+  display:inline-flex; align-items:center; gap:7px;
+  transition:transform .12s ease, box-shadow .12s ease, background .15s ease;
+}
+.btn svg{width:15px;height:15px;}
+.btn-primary{ background:var(--green); color:#fff; }
+.btn-primary:hover{ background:var(--green-dark); box-shadow:0 6px 16px rgba(53,181,106,0.3);}
+.btn-secondary{ background:var(--navy); color:#fff; }
+.btn-secondary:hover{ background:var(--navy-light);}
+.btn-ghost{ background:var(--gray-100); color:var(--gray-800); }
+.btn-ghost:hover{ background:var(--gray-200); }
+.btn-danger{ background:#fdeceb; color:var(--red); }
+.btn-danger:hover{ background:#fbd8d5; }
+.btn-sm{ padding:6px 10px; font-size:12px; border-radius:7px; }
+.btn:active{ transform:scale(0.97); }
+
+/* cards */
+.grid-4{ display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-bottom:24px;}
+.grid-2{ display:grid; grid-template-columns:2fr 1fr; gap:18px; margin-bottom:24px;}
+.grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-bottom:24px;}
+@media(max-width:1000px){ .grid-4{grid-template-columns:repeat(2,1fr);} .grid-2{grid-template-columns:1fr;} .grid-3{grid-template-columns:1fr;} }
+
+.stat-card{
+  background:#fff; border-radius:var(--radius); padding:20px; box-shadow:var(--shadow);
+  border:1px solid var(--gray-100);
+  transition:transform .18s ease, box-shadow .18s ease;
+}
+.stat-card:hover{ transform:translateY(-3px); box-shadow:var(--shadow-lg); }
+.stat-card .icon{
+  width:38px;height:38px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;margin-bottom:14px;
+}
+.stat-card .icon svg{width:19px;height:19px;}
+.stat-card .label{ font-size:12px; color:var(--gray-600); font-weight:600; margin-bottom:4px;}
+.stat-card .value{ font-size:24px; font-weight:800; color:var(--navy);}
+.stat-card .delta{ font-size:11.5px; margin-top:6px; font-weight:600;}
+.delta.up{ color:var(--green-dark); }
+.delta.down{ color:var(--red); }
+
+.card{
+  background:#fff; border-radius:var(--radius); padding:22px; box-shadow:var(--shadow);
+  border:1px solid var(--gray-100);
+}
+.card h3{ font-size:15px; font-weight:700; color:var(--navy); margin-bottom:16px;}
+
+.feature-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; }
+.feature-card{
+  background:#fff;border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);
+  border:1px solid var(--gray-100); cursor:pointer; transition:transform .15s ease, border-color .15s ease;
+}
+.feature-card:hover{ transform:translateY(-3px); border-color:var(--green); }
+.feature-card .icon{
+  width:36px;height:36px;border-radius:9px;background:var(--green-light);color:var(--green-dark);
+  display:flex;align-items:center;justify-content:center;margin-bottom:12px;
+}
+.feature-card .icon svg{width:18px;height:18px;}
+.feature-card h4{ font-size:13.5px;font-weight:700;color:var(--gray-800);margin-bottom:4px;}
+.feature-card p{ font-size:11.5px;color:var(--gray-600);}
+
+/* table */
+.table-toolbar{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; flex-wrap:wrap;}
+.search-box{ position:relative; }
+.search-box input{
+  padding:9px 14px 9px 34px; border:1.5px solid var(--gray-200); border-radius:9px; font-size:13px; width:240px; outline:none;
+  transition:border-color .15s;
+}
+.search-box input:focus{ border-color:var(--green); }
+.search-box svg{ position:absolute; left:11px; top:50%; transform:translateY(-50%); width:15px;height:15px;color:var(--gray-400);}
+table{ width:100%; border-collapse:collapse; font-size:13px;}
+thead th{
+  text-align:left; padding:11px 14px; background:var(--gray-50); color:var(--gray-600);
+  font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.4px;
+  border-bottom:1.5px solid var(--gray-200);
+}
+tbody td{ padding:12px 14px; border-bottom:1px solid var(--gray-100); color:var(--gray-800); }
+tbody tr{ transition:background .12s; }
+tbody tr:hover{ background:var(--gray-50); }
+.table-wrap{ overflow-x:auto; }
+.badge{ padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; display:inline-block;}
+.badge.paid{ background:var(--green-light); color:var(--green-dark); }
+.badge.partial{ background:#fff4e0; color:#a5700f; }
+.badge.unpaid{ background:#fdeceb; color:var(--red); }
+.badge.overdue{ background:#3a0a06; color:#ff9a92; }
+.badge.active{ background:var(--green-light); color:var(--green-dark); }
+.badge.inactive{ background:var(--gray-100); color:var(--gray-600); }
+.row-actions{ display:flex; gap:6px; }
+.icon-btn{
+  width:30px;height:30px;border-radius:7px;background:var(--gray-100);
+  display:flex;align-items:center;justify-content:center; color:var(--gray-600);
+  transition:background .15s;
+}
+.icon-btn svg{width:14px;height:14px;}
+.icon-btn:hover{ background:var(--gray-200); }
+.icon-btn.edit:hover{ background:#e0edff; color:#2563eb; }
+.icon-btn.del:hover{ background:#fdeceb; color:var(--red); }
+.pagination{ display:flex; align-items:center; justify-content:space-between; margin-top:16px; font-size:12.5px; color:var(--gray-600);}
+.pagination .pages{ display:flex; gap:6px; }
+.pagination button{
+  width:30px;height:30px;border-radius:7px;background:var(--gray-100);font-size:12.5px;font-weight:600;color:var(--gray-800);
+}
+.pagination button.active{ background:var(--navy); color:#fff; }
+th.sortable{ cursor:pointer; user-select:none; }
+th.sortable:hover{ color:var(--navy); }
+
+/* modal */
+.modal-overlay{
+  display:none; position:fixed; inset:0; background:rgba(11,45,82,0.45); z-index:200;
+  align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(2px);
+}
+.modal-overlay.active{ display:flex; animation:fadeIn .2s ease; }
+.modal{
+  background:#fff; border-radius:16px; width:min(560px,100%); max-height:88vh; overflow-y:auto;
+  box-shadow:0 24px 60px rgba(0,0,0,0.25); animation:fadeUp .25s ease;
+}
+.modal.wide{ width:min(760px,100%); }
+.modal-head{ display:flex;align-items:center;justify-content:space-between; padding:20px 24px; border-bottom:1px solid var(--gray-100);}
+.modal-head h3{ font-size:16px; font-weight:700; color:var(--navy);}
+.modal-close{ width:30px;height:30px;border-radius:8px;background:var(--gray-100); display:flex;align-items:center;justify-content:center; color:var(--gray-600);}
+.modal-close:hover{ background:var(--gray-200); }
+.modal-body{ padding:22px 24px; }
+.modal-foot{ padding:16px 24px; border-top:1px solid var(--gray-100); display:flex; justify-content:flex-end; gap:10px; }
+.form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.form-field{ margin-bottom:14px; }
+.form-field.full{ grid-column:1/-1; }
+.form-field label{ display:block; font-size:12px; font-weight:600; color:var(--gray-600); margin-bottom:6px;}
+.form-field input,.form-field select,.form-field textarea{
+  width:100%; padding:10px 12px; border:1.5px solid var(--gray-200); border-radius:9px; font-size:13.5px; outline:none;
+  transition:border-color .15s, box-shadow .15s;
+}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{
+  border-color:var(--green); box-shadow:0 0 0 3px rgba(53,181,106,0.13);
+}
+.form-hint{ font-size:11px; color:var(--gray-400); margin-top:4px; }
+
+.line-items{ border:1px solid var(--gray-200); border-radius:10px; overflow:hidden; margin-bottom:6px;}
+.line-items table{ font-size:12.5px; }
+.line-items input{ width:100%; padding:7px 8px; border:1px solid var(--gray-200); border-radius:6px; font-size:12.5px;}
+.totals-box{ background:var(--gray-50); border-radius:10px; padding:14px 16px; margin-top:10px; }
+.totals-row{ display:flex; justify-content:space-between; font-size:13px; padding:4px 0; color:var(--gray-600);}
+.totals-row.grand{ font-size:15px; font-weight:700; color:var(--navy); border-top:1px solid var(--gray-200); margin-top:6px; padding-top:10px;}
+
+/* toast */
+#toast-wrap{ position:fixed; top:20px; right:20px; z-index:400; display:flex; flex-direction:column; gap:10px;}
+.toast{
+  background:#fff; border-radius:10px; padding:13px 18px; box-shadow:var(--shadow-lg); font-size:13px; font-weight:600;
+  display:flex; align-items:center; gap:10px; min-width:250px; border-left:4px solid var(--green);
+  animation:slideIn .25s ease;
+}
+@keyframes slideIn{ from{opacity:0; transform:translateX(30px);} to{opacity:1; transform:translateX(0);} }
+.toast.error{ border-left-color:var(--red); }
+.toast.warn{ border-left-color:var(--amber); }
+.toast svg{ width:17px;height:17px; flex-shrink:0; }
+.toast.success svg{ color:var(--green-dark); }
+.toast.error svg{ color:var(--red); }
+.toast.warn svg{ color:var(--amber); }
+
+.confirm-box p{ font-size:13.5px; color:var(--gray-600); line-height:1.6; }
+
+.charts-grid{ display:grid; grid-template-columns:1.3fr 1fr; gap:18px; margin-bottom:24px; }
+.charts-grid .card canvas{ max-height:230px; }
+@media(max-width:1000px){ .charts-grid{grid-template-columns:1fr;} }
+
+.faq-item{ border-bottom:1px solid var(--gray-100); padding:16px 0; }
+.faq-item h4{ font-size:14px; color:var(--navy); margin-bottom:6px; font-weight:600; }
+.faq-item p{ font-size:13px; color:var(--gray-600); line-height:1.6; }
+
+.settings-form{ max-width:520px; }
+
+.tabs{ display:flex; gap:6px; margin-bottom:20px; border-bottom:1px solid var(--gray-200); }
+.tab-btn{ padding:10px 16px; font-size:13px; font-weight:600; color:var(--gray-600); border-bottom:2px solid transparent; }
+.tab-btn.active{ color:var(--navy); border-bottom-color:var(--green); }
+
+.receipt{ font-family:'Poppins',sans-serif; padding:10px; }
+.receipt h2{ color:var(--navy); font-size:17px; margin-bottom:2px;}
+.receipt .sub{ font-size:11px; color:var(--gray-600); margin-bottom:16px;}
+.receipt table{ font-size:12.5px; }
+.receipt .total-line{ font-weight:700; font-size:14px; color:var(--navy); }
+
+@media(max-width:900px){
+  .sidebar{ transform:translateX(-100%); }
+  .sidebar.open{ transform:translateX(0); }
+  .main{ margin-left:0; width:100%; }
+  .menu-toggle{ display:flex; align-items:center; justify-content:center; }
+  .form-grid{ grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN PAGE ============ -->
+<div id="login-page">
+  <div class="login-shell">
+    <div class="login-form-side">
+      <div class="login-logo">
+        <div class="mark">B</div>
+        <div class="word">Bayad<span>Track</span></div>
+      </div>
+      <div class="avatar-circle">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+      </div>
+      <p style="font-size:14.5px;font-weight:600;color:var(--gray-800);margin-bottom:22px;">Welcome to BayadTrack</p>
+      <div id="login-error" class="login-error"></div>
+
+      <!-- ==================================================
+           EMAIL / PASSWORD LOGIN — original BayadTrack sign-in.
+           Restored alongside Google sign-in below. Uses Firebase
+           Auth's email/password provider so both methods share
+           the same account-creation, role-detection, and data
+           layer in the onAuthStateChanged handler further down.
+           ================================================== -->
+      <form id="email-login-form" style="width:100%;" autocomplete="on">
+        <div class="login-field">
+          <label for="login-email">Email / Username</label>
+          <input type="text" id="login-email" name="email" placeholder="you@example.com" autocomplete="username" required>
+        </div>
+        <div class="login-field">
+          <label for="login-password">Password</label>
+          <div class="login-field-password-wrap">
+            <input type="password" id="login-password" name="password" placeholder="••••••••" autocomplete="current-password" required>
+            <button type="button" class="password-toggle-btn" id="password-toggle-btn" aria-label="Show password">
+              <svg id="password-toggle-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="btn-signin" id="email-login-btn">Login</button>
+      </form>
+
+      <div class="login-divider">OR</div>
+
+      <!-- ==================================================
+           GOOGLE LOGIN — additional sign-in method alongside
+           the email/password form above. Signing in with Google
+           auto-creates an account on first login (see AUTOMATIC
+           ACCOUNT CREATION below) and determines the role: the
+           one Gmail address in ADMIN_EMAIL becomes Admin, every
+           other Gmail address becomes a Participant.
+           ================================================== -->
+      <button type="button" id="google-signin-btn" style="width:100%;margin-top:4px;padding:12px;border:1.5px solid var(--gray-200);border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:600;font-size:14px;color:var(--gray-800);transition:box-shadow .2s,border-color .2s;">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.9 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.4-1.9 14.3-5.1l-6.6-5.6c-2 1.5-4.6 2.5-7.7 2.5-5.2 0-9.6-3.3-11.3-7.9l-6.6 5.1C9.6 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.3-4.1 5.7l6.6 5.6C41.4 36.6 44 30.9 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
+        <span id="google-signin-label">Continue with Google</span>
+      </button>
+    </div>
+    <div class="login-illustration-side">
+      <div class="illustration-content">
+        <div class="illustration-mark">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+        </div>
+        <h2>Bayad Track</h2>
+        <p>Credit &amp; debt tracking, built for wholesale supply businesses.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="mark">B</div>
+        <div class="word">Bayad<span>Track</span></div>
+      </div>
+      <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- ==================================================
+             PARTICIPANT NAVIGATION — UNCHANGED
+             Shown only to Participant accounts. Do not modify.
+             ================================================== -->
+        <div id="participant-nav-group">
+        <div class="nav-item" data-view="dashboard"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" /></svg><span>Dashboard</span></div>
+        <div class="nav-item" data-view="customers"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg><span>Customers</span></div>
+        <div class="nav-item" data-view="transactions"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" /></svg><span>Credit Transactions</span></div>
+        <div class="nav-item" data-view="payments"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span>Payments</span></div>
+        <div class="nav-item" data-view="reports"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg><span>Reports</span></div>
+        <div class="nav-item" data-view="faq"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" /></svg><span>FAQs / Help</span></div>
+        <div class="nav-item" data-view="settings"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.28z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg><span>Settings</span></div>
+        </div>
+
+        <!-- ==================================================
+             ADMIN PANEL NAVIGATION — Admin accounts only.
+             Replaces the participant nav entirely for Admin.
+             This is a real System Administration panel: it manages
+             the system/users, not participant business records.
+             ================================================== -->
+        <div id="admin-nav-group" style="display:none;">
+          <div class="sidebar-section-label">Admin Panel</div>
+          <div class="nav-item" data-view="admindashboard"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" /></svg><span>Admin Dashboard</span></div>
+          <div class="nav-item" data-view="manageusers"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" /></svg><span>Manage Users</span></div>
+          <div class="nav-item" data-view="organizations"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" /></svg><span>Organizations / Companies</span></div>
+          <div class="nav-item" data-view="systemanalytics"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg><span>System Analytics</span></div>
+          <div class="nav-item" data-view="activitylogs"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span>Activity Logs</span></div>
+          <div class="nav-item" data-view="accessroles"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg><span>Access &amp; Roles</span></div>
+          <div class="nav-item" data-view="systemreports"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg><span>System Reports</span></div>
+          <div class="nav-item" data-view="adminnotifications"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg><span>Notifications</span></div>
+          <div class="nav-item" data-view="systemsettings"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.28z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg><span>System Settings</span></div>
+          <div class="nav-item" data-view="security"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg><span>Security</span></div>
+          <div class="nav-item" data-view="adminhelp"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" /></svg><span>Help</span></div>
+        </div>
+      </nav>
+      <div class="sidebar-foot">
+        <div class="nav-item" id="logout-btn"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0110.5 3h6a2.25 2.25 0 012.25 2.25v13.5A2.25 2.25 0 0116.5 21h-6a2.25 2.25 0 01-2.25-2.25V15m-3 0l-3-3m0 0l3-3m-3 3H15" /></svg><span>Logout</span></div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="topbar">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <button class="menu-toggle" id="menu-toggle">&#9776;</button>
+          <div class="topbar-title" id="topbar-title">Dashboard</div>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-user"><div class="dot" id="user-initial">A</div><span id="user-name">Admin</span></div>
+        </div>
+      </div>
+      <div class="content" id="content"><!-- views injected by JS --></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-wrap"></div>
+<div class="modal-overlay" id="modal-overlay"><div class="modal" id="modal"></div></div>
+
+<script>
+/* ============================================================
+   BAYAD TRACK — client-side prototype
+   Data layer: Firebase Firestore, one users/{uid}/data/{table} document
+   per table for every signed-in account (Admin and Participant alike).
+   Tables: users, customers, transactions, payments, settings, activity_logs
+   ============================================================ */
+
+const DB_PREFIX = 'bayadtrack_';
+const PRODUCTS = [
+  {name:'Rice 25kg Sack', price:1450},
+  {name:'Cooking Oil 1L', price:95},
+  {name:'Refined Sugar 1kg', price:78},
+  {name:'Canned Sardines (case/48)', price:960},
+  {name:'Instant Noodles (case/30)', price:330},
+  {name:'Bottled Water (case/24)', price:120},
+  {name:'Laundry Detergent 1kg', price:145},
+  {name:'Bar Soap (dozen)', price:180},
+  {name:'Coffee 3-in-1 (box/30)', price:210},
+  {name:'Canned Corned Beef (case/24)', price:1680},
+  {name:'All-Purpose Flour 1kg', price:62},
+  {name:'Canned Milk (case/48)', price:1120},
+];
+
+
+/* ==================================================
+   FIREBASE CONFIGURATION
+   PASTE YOUR FIREBASE CONFIG HERE
+   DO NOT EDIT ANYTHING BELOW
+   ==================================================
+   1. Go to the Firebase Console → Project Settings → Your apps → Web app
+   2. Copy the firebaseConfig object and paste its values below
+   3. In the Firebase Console, enable:
+        Authentication → Sign-in method → Google  (and also Anonymous —
+          used only for the Admin's background session, see ADMIN LOGIN below)
+        Firestore Database → Create database (Start in test mode is fine, then
+          replace the rules with the ones below before real use)
+   4. FIRESTORE SECURITY RULES — paste these in Firestore → Rules.
+      Everyone (Admin included) now signs in with Google, so every
+      request.auth carries a real Firebase UID and email — no more
+      anonymous session needed for the Admin.
+      They lock every participant's customers/debts/payments to their
+      own Firebase UID (request.auth.uid), matching REQUIREMENT 9/16:
+      a user can only ever read/write documents under their own uid,
+      so participants can never see or modify each other's data, and
+      can never write their own role to "admin" (the /data subcollection
+      that holds their financial records is locked to their own uid,
+      and the role on their own /users/{uid} profile doc is only ever
+      trusted client-side after being recomputed from ADMIN_EMAIL on
+      each sign-in — see AUTOMATIC ROLE DETECTION below).
+      The top-level "users" profile doc is readable by any signed-in
+      Firebase user, so Manage Users can list registered accounts. A
+      user can write their OWN profile doc; the configured Admin Gmail
+      (request.auth.token.email) can additionally write ANY profile doc,
+      so it can Activate/Deactivate any participant — but it is NEVER
+      granted access to another user's private /data subcollection,
+      which stays locked to the owning uid.
+      IMPORTANT: replace the email string below with the exact same
+      address you put in ADMIN_EMAIL further down this file — Firestore
+      rules can't read a JS variable, so the two must be kept in sync.
+        rules_version = '2';
+        service cloud.firestore {
+          match /databases/{database}/documents {
+            match /users/{uid} {
+              allow read: if request.auth != null;
+              allow write: if request.auth != null &&
+                (request.auth.uid == uid || request.auth.token.email == "YOUR_ADMIN_GMAIL@gmail.com");
+              match /data/{table} {
+                allow read, write: if request.auth != null && request.auth.uid == uid;
+              }
+            }
+            // Admin Panel — Activity Logs / Admin Dashboard feed. Any signed-in
+            // account may CREATE an entry (only ever tagged with its own uid),
+            // but only the Admin account can read the collection back, so
+            // Participants never see each other's — or anyone's — activity.
+            match /system_activity/{logId} {
+              allow read: if request.auth != null && request.auth.token.email == "YOUR_ADMIN_GMAIL@gmail.com";
+              allow create: if request.auth != null && request.resource.data.user_uid == request.auth.uid;
+              allow update, delete: if false;
+            }
+          }
+        }
+   ================================================== */
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyCZ0c6xRb0Aa4_qbyDst6JUuYddmQe9u5w",
+  authDomain: "bayad-track.firebaseapp.com",
+  projectId: "bayad-track",
+  storageBucket: "bayad-track.firebasestorage.app",
+  messagingSenderId: "345547769685",
+  appId: "1:345547769685:web:122bc3cf4a8fcb5c4611dc",
+  measurementId: "G-NJSD5L2HZ6"
+};
+/* ==================================================
+   FIREBASE INIT GUARD
+   Fixes "ReferenceError: firebase is not defined" by making sure
+   the compat SDK scripts (loaded in <head>, lines ~14-16) actually
+   finished loading before anything here touches the `firebase`
+   global. If a script failed (network block, ad-blocker, offline
+   preview, etc.) this shows a real, visible error on the login
+   page instead of a silent console crash — and stops the rest of
+   this script from running (since fbAuth/fbStore wouldn't exist).
+   ================================================== */
+if (typeof firebase === 'undefined') {
+  const errBox = document.getElementById('login-error');
+  if (errBox) {
+    errBox.textContent = 'Could not load Firebase (the required scripts failed to load — check your network connection or ad-blocker, then refresh).';
+    errBox.style.display = 'block';
+  }
+  ['email-login-btn','google-signin-btn'].forEach(id=>{
+    const el = document.getElementById(id);
+    if (el) el.disabled = true;
+  });
+  throw new Error('Firebase SDK failed to load — aborting app init.');
+}
+
+firebase.initializeApp(firebaseConfig);
+const fbAuth = firebase.auth();
+const fbStore = firebase.firestore();
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+
+/* Diagnostic only (no UI change): logs the live hostname next to the
+   Firebase project so an "auth/unauthorized-domain" error is easy to
+   trace back to Authentication → Settings → Authorized domains. */
+console.log('[Firebase] project:', firebaseConfig.projectId, '| authDomain:', firebaseConfig.authDomain, '| current hostname:', location.hostname);
+
+/* ===============================
+   BAYADTRACK ADMIN GMAIL
+   REPLACE THE EMAIL BELOW WITH YOUR MAIN GMAIL
+   ===============================
+   There is no separate Admin registration and no Admin password.
+   Whichever Google account signs in with this exact email address
+   automatically becomes the Admin (AUTOMATIC ROLE DETECTION, below).
+   Every other Google account that signs in becomes a Participant.
+   Keep this in sync with the Firestore security rule above. */
+const ADMIN_EMAIL = "jhayrol2008@gmail.com";
+
+/* ---------- DATA LAYER ----------
+   CACHE holds whichever account's data is currently active in memory.
+   Admin and Participants are both Firebase/Google users now, so both
+   read/write their own users/{uid}/data/* documents in Firestore —
+   the Admin's own customers (if they create any) are just as private
+   to the Admin's uid as a Participant's are to theirs (REQUIREMENT 11).
+   db()/dbSave() below are used by every existing feature untouched —
+   only the storage underneath them changed. */
+let CACHE = {};
+let CURRENT_ROLE = null;   // 'admin' | 'member' — controls UI only (e.g. Manage Users), not data access
+let CURRENT_UID = null;    // Firebase UID of whoever is signed in
+
+function db(table){
+  return CACHE[table] || [];
+}
+function dbSave(table, arr){
+  CACHE[table] = arr;
+  if(CURRENT_UID){
+    // Every signed-in user's data — Admin or Participant — is saved to
+    // their own private Firestore documents, keyed by their own uid.
+    firestoreSaveTable(CURRENT_UID, table, arr);
+  }
+}
+function nextId(table){ const rows = db(table); return rows.length ? Math.max(...rows.map(r=>r.id))+1 : 1; }
+function log(action){
+  const logs = db('activity_logs');
+  logs.unshift({id:nextId('activity_logs'), action, at:new Date().toISOString(), user: session()?.username || session()?.email || 'system'});
+  dbSave('activity_logs', logs.slice(0,300));
+  logGlobalActivity(action); // mirror into the system-wide Activity Logs the Admin panel reads (see below)
+}
+
+/* ==================================================
+   GLOBAL SYSTEM ACTIVITY (Admin Panel — Activity Logs)
+   Every signed-in account (Admin or Participant) appends its own
+   actions to this single top-level Firestore collection so the
+   Admin can see real, system-wide activity — logins, registrations,
+   customers/transactions/payments added, account activation, etc.
+   This is separate from each account's private users/{uid}/data/
+   activity_logs used above, which stays untouched and private.
+   Firestore rule needed (add alongside the users/{uid} rule above):
+     match /system_activity/{logId} {
+       allow read: if request.auth != null && request.auth.token.email == "YOUR_ADMIN_GMAIL@gmail.com";
+       allow create: if request.auth != null && request.resource.data.user_uid == request.auth.uid;
+       allow update, delete: if false;
+     }
+   Each user can only ever CREATE an entry tagged with their own uid
+   (never another user's) and only the Admin account can read the
+   collection back — participants never see this feed.
+   ================================================== */
+function logGlobalActivity(action, meta, userOverride){
+  if(!CURRENT_UID || typeof fbStore === 'undefined') return;
+  const u = userOverride || session();
+  fbStore.collection('system_activity').add({
+    action,
+    meta: meta || null,
+    user_uid: CURRENT_UID,
+    user_name: u?.name || 'Unknown',
+    user_email: u?.email || '',
+    role: CURRENT_ROLE,
+    at: new Date().toISOString(),
+  }).catch(err=> console.error('logGlobalActivity failed', err));
+}
+function fmtMoney(n){ return '\u20B1' + Number(n||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtDate(d){ return new Date(d).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}); }
+function todayISO(offsetDays=0){ const d=new Date(); d.setDate(d.getDate()+offsetDays); return d.toISOString().slice(0,10); }
+
+/* ==================================================
+   FIRESTORE DATABASE
+   ================================================== */
+const TABLE_NAMES = ['customers','transactions','payments','settings','activity_logs'];
+
+/* ==================================================
+   SAVE USER DATA
+   Each table (customers, transactions, payments, settings,
+   activity_logs) is stored as ONE Firestore document per member,
+   under:  users/{uid}/data/{table}   ->  { rows: [ ... ] }
+   ================================================== */
+function firestoreSaveTable(uid, table, arr){
+  fbStore.collection('users').doc(uid).collection('data').doc(table)
+    .set({ rows: arr }, {merge:false})
+    .catch(err=> console.error('Firestore save failed for', table, err));
+}
+
+/* ==================================================
+   LOAD USER DATA
+   Pulls every table for this member's uid out of Firestore and
+   fills CACHE with it so all existing features work unchanged.
+   ================================================== */
+async function firestoreLoadAllTables(uid){
+  const loaded = {};
+  await Promise.all(TABLE_NAMES.map(async table=>{
+    const snap = await fbStore.collection('users').doc(uid).collection('data').doc(table).get();
+    loaded[table] = snap.exists ? (snap.data().rows || []) : [];
+  }));
+  return loaded;
+}
+
+/* ---------- SESSION ---------- */
+function session(){ const s = sessionStorage.getItem(DB_PREFIX+'session'); return s?JSON.parse(s):null; }
+function setSession(u){ sessionStorage.setItem(DB_PREFIX+'session', JSON.stringify(u)); }
+function clearSession(){ sessionStorage.removeItem(DB_PREFIX+'session'); }
+
+/* ==================================================
+   NO AUTOMATIC DEMO DATA
+   Earlier versions of this prototype auto-generated 30 sample
+   customers/transactions. That generator has been removed —
+   every account (Admin and every Gmail member) now starts at
+   zero and is only ever filled by data someone actually enters.
+   ================================================== */
+/* ==================================================
+   ONE-TIME LEGACY CLEANUP
+   Earlier versions of this prototype auto-generated 30 sample
+   customers/transactions into localStorage, and later stored the
+   Admin's own data in localStorage too. Neither is used any more —
+   every account (Admin and every Gmail participant) now lives in
+   Firestore, keyed by Firebase uid, and starts at zero. This just
+   wipes any leftover localStorage demo/admin data from old sessions.
+   ================================================== */
+function seedIfEmpty(){
+  ['customers','transactions','payments','activity_logs','settings','seeded'].forEach(t=>localStorage.removeItem(DB_PREFIX+t));
+}
+
+/* ==================================================
+   NEW ACCOUNTS START EMPTY
+   A brand-new Gmail sign-in — Admin or Participant — gets zero
+   customers, zero transactions, and zero payments — Total Customers: 0,
+   Receivables: ₱0.00, Collected: ₱0.00, Outstanding: ₱0.00, Overdue: 0.
+   The account owner adds their own customers and debts manually.
+   ================================================== */
+async function seedNewMember(uid){
+  const blank = { customers:[], transactions:[], payments:[], activity_logs:[], settings:[{id:1, business_name:'Bayad Track Wholesale Supply', address:'', contact:'', currency:'PHP', interest_rate:2, auto_interest_enabled:true}] };
+  CACHE = blank;
+  CURRENT_UID = uid;
+  TABLE_NAMES.forEach(t=> firestoreSaveTable(uid, t, blank[t]));
+}
+
+/* ---------- computed helpers ---------- */
+function txnPaidAmount(txnId){
+  const txn = db('transactions').find(t=>t.id===txnId);
+  const pays = db('payments').filter(p=>p.transaction_id===txnId).reduce((s,p)=>s+p.amount,0);
+  return (txn?.down_payment||0) + pays;
+}
+function autoInterestEnabled(){
+  const s = db('settings')[0];
+  return s && s.auto_interest_enabled != null ? !!s.auto_interest_enabled : true;
+}
+function defaultInterestRate(){
+  const s = db('settings')[0];
+  return s && s.interest_rate!=null ? Number(s.interest_rate) : 2; // % per month, default 2%
+}
+function interestRate(txn){
+  // Per-transaction override takes priority over the admin default rate.
+  if(txn && txn.interest_rate!=null && txn.interest_rate!==''){ return Number(txn.interest_rate); }
+  return defaultInterestRate();
+}
+function txnDaysOverdue(txn){
+  const due = new Date(txn.due_date);
+  const now = new Date();
+  if(now <= due) return 0;
+  return Math.floor((now - due) / 86400000);
+}
+function txnMonthsOverdue(txn){ return txnDaysOverdue(txn); } // kept for backward compatibility
+function txnBasePrincipal(txn){
+  return Math.max(0, txn.total - (txn.down_payment||0));
+}
+function txnPaymentsSum(txn){
+  return db('payments').filter(p=>p.transaction_id===txn.id).reduce((s,p)=>s+p.amount,0);
+}
+function txnPrincipalRemaining(txn){
+  return Math.max(0, txnBasePrincipal(txn) - txnPaymentsSum(txn));
+}
+function txnAccruedPrincipal(txn){
+  // Compounds monthly (using days-overdue ÷ 30 as the elapsed-month fraction) once the due date has passed.
+  const base = txnBasePrincipal(txn);
+  if(base<=0) return 0;
+  if(!autoInterestEnabled()) return base;
+  const days = txnDaysOverdue(txn);
+  if(days<=0) return base;
+  const rate = interestRate(txn)/100;
+  const monthsElapsed = days / 30;
+  return Math.round(base * Math.pow(1+rate, monthsElapsed) * 100)/100;
+}
+function txnInterestAdded(txn){
+  return Math.round((txnAccruedPrincipal(txn) - txnBasePrincipal(txn)) * 100)/100;
+}
+function txnPenalty(txn){ return txnInterestAdded(txn); } // kept for backward compatibility
+function txnRemaining(txn){
+  const accrued = txnAccruedPrincipal(txn);
+  if(accrued<=0) return 0;
+  const paid = txnPaymentsSum(txn);
+  return Math.max(0, Math.round((accrued - paid) * 100)/100);
+}
+function txnStatus(txn){
+  const remaining = txnRemaining(txn);
+  if(remaining<=0) return 'Paid';
+  if(txnDaysOverdue(txn) > 0) return 'Overdue';
+  if(txnPaymentsSum(txn) > 0) return 'Partial';
+  return 'Unpaid';
+}
+function customerName(id){ return db('customers').find(c=>c.id===id)?.name || 'Unknown'; }
+
+/* ============================================================
+   AUTH / LOGIN
+   ============================================================ */
+/* ==================================================
+   EMAIL / PASSWORD LOGIN — original BayadTrack sign-in, restored.
+   Uses Firebase Auth's email/password provider. On success, the
+   shared fbAuth.onAuthStateChanged handler below takes over —
+   same role detection (ADMIN_EMAIL) and account loading as Google
+   sign-in, so the existing Admin login keeps working here too:
+   whichever account's email matches ADMIN_EMAIL lands in the
+   Admin Dashboard, any other account lands in the Participant
+   Dashboard.
+   ================================================== */
+document.getElementById('email-login-form').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const btn = document.getElementById('email-login-btn');
+  const errBox = document.getElementById('login-error');
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  errBox.style.display = 'none';
+
+  if(!email || !password){
+    errBox.textContent = 'Please enter both your email/username and password.';
+    errBox.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  const originalLabel = btn.textContent;
+  btn.textContent = 'Signing in…';
+  try{
+    await fbAuth.signInWithEmailAndPassword(email, password);
+    // onAuthStateChanged (below) takes it from here: it loads the
+    // account, detects the role, and calls enterApp().
+  }catch(err){
+    console.error(err);
+    let msg = 'Login failed. Please check your email and password and try again.';
+    if(err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential'){
+      msg = 'No account found with that email/username and password.';
+    } else if(err.code === 'auth/wrong-password'){
+      msg = 'Incorrect password. Please try again.';
+    } else if(err.code === 'auth/invalid-email'){
+      msg = 'Please enter a valid email address.';
+    } else if(err.code === 'auth/too-many-requests'){
+      msg = 'Too many failed attempts. Please wait a moment and try again.';
+    } else if(err.code === 'auth/user-disabled'){
+      msg = 'This account has been deactivated by the Admin. Please contact the Admin for access.';
+    }
+    errBox.textContent = msg;
+    errBox.style.display = 'block';
+  }finally{
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
+});
+
+/* Show/hide password toggle for the email/password field. */
+document.getElementById('password-toggle-btn').addEventListener('click', ()=>{
+  const input = document.getElementById('login-password');
+  const btn = document.getElementById('password-toggle-btn');
+  const isHidden = input.type === 'password';
+  input.type = isHidden ? 'text' : 'password';
+  btn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+  document.getElementById('password-toggle-icon').innerHTML = isHidden
+    ? '<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />'
+    : '<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />';
+});
+
+/* ==================================================
+   GOOGLE LOGIN — additional sign-in method alongside email/password.
+   Handles Admin and Participant alike. Automatically creates a
+   blank account on a Gmail's first sign-in, or logs straight back
+   into the same account on repeat sign-ins. Role is decided purely
+   by comparing the signed-in email to ADMIN_EMAIL (see below) —
+   there is no role picker and no way for a user to choose "Admin".
+
+   IMPORTANT — GitHub Pages / Firebase Console setup required:
+   No amount of client-side code can fix an "auth/unauthorized-domain"
+   error by itself. Your GitHub Pages hostname (e.g.
+   "yourusername.github.io") must be added in the Firebase Console:
+     Authentication → Settings → Authorized domains → Add domain
+   Add the exact hostname shown by location.hostname on your deployed
+   site (custom domains too, if you use one). "localhost" is added by
+   default, which is why it can work locally but fail once deployed.
+   The code below detects this specific error and surfaces it clearly
+   instead of the old generic "Google sign-in failed" message.
+
+   POPUP vs REDIRECT:
+   signInWithPopup() opens a popup window and is fine on desktop, but
+   many mobile browsers (in-app browsers, Safari with strict popup/
+   third-party-cookie rules, popup blockers) silently block or kill
+   the popup, which surfaces as auth/popup-blocked,
+   auth/popup-closed-by-user, or auth/operation-not-supported-in-this-environment.
+   To handle this reliably, we try signInWithPopup() first (best UX
+   on desktop — no full-page navigation), and automatically fall back
+   to signInWithRedirect() whenever the popup approach fails for an
+   environment reason. getRedirectResult() (below, run once on page
+   load) picks the sign-in back up after the redirect returns.
+   ================================================== */
+const POPUP_FALLBACK_ERROR_CODES = new Set([
+  'auth/popup-blocked',
+  'auth/popup-closed-by-user',
+  'auth/cancelled-popup-request',
+  'auth/operation-not-supported-in-this-environment',
+  'auth/web-storage-unsupported',
+]);
+
+function describeAuthError(err){
+  const code = err && err.code ? err.code : 'unknown';
+  const raw = err && err.message ? err.message : String(err);
+  let friendly = `Google sign-in failed (${code}). Please try again.`;
+  if(code === 'auth/unauthorized-domain'){
+    friendly = `Google sign-in failed: this domain ("${location.hostname}") is not authorized in the Firebase Console. Go to Authentication → Settings → Authorized domains and add "${location.hostname}".`;
+  } else if(code === 'auth/popup-blocked'){
+    friendly = 'Your browser blocked the Google sign-in popup. Retrying with a redirect instead…';
+  } else if(code === 'auth/network-request-failed'){
+    friendly = 'Network error while contacting Google/Firebase. Check your internet connection and try again.';
+  } else if(code === 'auth/internal-error'){
+    friendly = 'Google sign-in failed due to an internal Firebase error. Check the browser console for details.';
+  } else if(code === 'auth/user-disabled'){
+    friendly = 'This account has been deactivated by the Admin. Please contact the Admin for access.';
+  }
+  return { code, raw, friendly };
+}
+
+async function startGoogleSignIn(){
+  const btn = document.getElementById('google-signin-btn');
+  const label = document.getElementById('google-signin-label');
+  const errBox = document.getElementById('login-error');
+  errBox.style.display = 'none';
+  btn.disabled = true;
+  label.textContent = 'Signing in…';
+  try{
+    await fbAuth.signInWithPopup(googleProvider);
+    // onAuthStateChanged (below) takes it from here: it creates the
+    // account if needed, loads/seeds data, and calls enterApp().
+    btn.disabled = false;
+    label.textContent = 'Continue with Google';
+  }catch(err){
+    // Always log the real Firebase error code/message to the console —
+    // never just the generic sentence — so this is debuggable.
+    console.error('[Google sign-in] Firebase error:', err.code, '—', err.message, err);
+
+    if(POPUP_FALLBACK_ERROR_CODES.has(err.code)){
+      // Popup didn't work in this browser/environment — fall back to
+      // a full-page redirect flow, which works far more reliably on
+      // mobile browsers and in-app webviews.
+      label.textContent = 'Redirecting to Google…';
+      try{
+        await fbAuth.signInWithRedirect(googleProvider);
+        // Browser navigates away here; execution stops. getRedirectResult()
+        // on the next page load (below) picks the sign-in back up.
+        return;
+      }catch(redirectErr){
+        console.error('[Google sign-in] Redirect fallback also failed:', redirectErr.code, '—', redirectErr.message, redirectErr);
+        const { friendly } = describeAuthError(redirectErr);
+        errBox.textContent = friendly;
+        errBox.style.display = 'block';
+      }
+    } else {
+      const { friendly } = describeAuthError(err);
+      errBox.textContent = friendly;
+      errBox.style.display = 'block';
+    }
+    btn.disabled = false;
+    label.textContent = 'Continue with Google';
+  }
+}
+
+document.getElementById('google-signin-btn').addEventListener('click', startGoogleSignIn);
+
+/* ==================================================
+   REDIRECT RESULT HANDLER
+   Runs once on every page load. If the user just came back from the
+   signInWithRedirect() flow above, this picks up the completed sign-in
+   (or surfaces the real error if it failed) before anything else runs.
+   If the user did NOT just come from a redirect, result.user is null
+   and this is a harmless no-op — fbAuth.onAuthStateChanged still
+   handles normal returning sessions on its own.
+   ================================================== */
+fbAuth.getRedirectResult().then((result)=>{
+  if(result && result.user){
+    // onAuthStateChanged (below) will fire for this user and finish
+    // the job (role detection, account load, enterApp()).
+    const label = document.getElementById('google-signin-label');
+    if(label) label.textContent = 'Loading your account…';
+  }
+}).catch((err)=>{
+  console.error('[Google sign-in] getRedirectResult error:', err.code, '—', err.message, err);
+  const errBox = document.getElementById('login-error');
+  if(errBox){
+    const { friendly } = describeAuthError(err);
+    errBox.textContent = friendly;
+    errBox.style.display = 'block';
+  }
+});
+
+/* Fires whenever Firebase Auth's sign-in state changes (fresh sign-in,
+   or a returning user whose session Firebase already remembers). */
+fbAuth.onAuthStateChanged(async (fbUser)=>{
+  if(!fbUser) return; // signed out — no one signed in yet
+
+  const label = document.getElementById('google-signin-label');
+  if(label) label.textContent = 'Loading your account…';
+
+  /* ==================================================
+     AUTOMATIC ROLE DETECTION
+     The signed-in Gmail is compared against ADMIN_EMAIL every time —
+     not read from a field the user could tamper with — so a user can
+     never promote themselves to Admin by editing their own profile doc.
+     ================================================== */
+  const isAdmin = fbUser.email === ADMIN_EMAIL;
+  const role = isAdmin ? 'admin' : 'participant';
+
+  const userDocRef = fbStore.collection('users').doc(fbUser.uid);
+  const userDoc = await userDocRef.get();
+
+  /* ==================================================
+     AUTOMATIC ACCOUNT CREATION
+     First Google login = automatic account creation. No manual
+     registration step exists anywhere in this app.
+     ================================================== */
+  if(!userDoc.exists){
+    const newAccount = {
+      uid: fbUser.uid,
+      full_name: fbUser.displayName || fbUser.email,
+      email: fbUser.email,
+      photo_url: fbUser.photoURL || null,
+      role: role,
+      status: 'Active',
+      date_created: new Date().toISOString(),
+      last_login: new Date().toISOString(),
+    };
+    await userDocRef.set(newAccount);
+    await seedNewMember(fbUser.uid); // sets up this new account with a blank, empty dataset — no demo data
+    CURRENT_UID = fbUser.uid;
+    CURRENT_ROLE = isAdmin ? 'admin' : 'member';
+    logGlobalActivity('New user registered through Google', null, {name:newAccount.full_name, email:newAccount.email});
+  } else {
+    const existing = userDoc.data();
+    if(existing.status === 'Inactive'){
+      const errBox = document.getElementById('login-error');
+      errBox.textContent = 'This account has been deactivated by the Admin. Please contact the Admin for access.';
+      errBox.style.display = 'block';
+      if(label) label.textContent = 'Continue with Google';
+      const emailBtn = document.getElementById('email-login-btn');
+      if(emailBtn){ emailBtn.disabled = false; emailBtn.textContent = 'Login'; }
+      await fbAuth.signOut();
+      return;
+    }
+    // keep the profile photo/name/role fresh in case they changed
+    await userDocRef.update({ photo_url: fbUser.photoURL || null, full_name: fbUser.displayName || existing.full_name, role: role, last_login: new Date().toISOString() });
+  }
+
+  CURRENT_ROLE = isAdmin ? 'admin' : 'member';
+  CURRENT_UID = fbUser.uid;
+  CACHE = await firestoreLoadAllTables(fbUser.uid);
+
+  const acctData = (await userDocRef.get()).data();
+  const loggedInUser = {
+    uid: fbUser.uid,
+    name: acctData.full_name || fbUser.displayName || fbUser.email,
+    email: acctData.email || fbUser.email,
+    role: CURRENT_ROLE,
+  };
+  setSession(loggedInUser);
+  log('Logged in');
+  enterApp();
+});
+
+function enterApp(){
+  const user = session();
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('user-name').textContent = user.name + (user.role==='admin' ? ' (Admin)' : '');
+  document.getElementById('user-initial').textContent = user.name.charAt(0).toUpperCase();
+
+  /* ==================================================
+     ADMIN vs PARTICIPANT NAVIGATION
+     Admin accounts get the full System Administration panel
+     (#admin-nav-group) in place of the Participant nav — the
+     Participant nav/UI itself is never touched.
+     ================================================== */
+  const isAdmin = user.role === 'admin';
+  document.getElementById('participant-nav-group').style.display = isAdmin ? 'none' : 'block';
+  document.getElementById('admin-nav-group').style.display = isAdmin ? 'block' : 'none';
+  document.getElementById('sidebar').classList.toggle('is-admin', isAdmin);
+  showView(isAdmin ? 'admindashboard' : 'dashboard');
+}
+
+document.getElementById('logout-btn').addEventListener('click', ()=>{
+  log('Logged out');
+  clearSession();
+  CACHE = {};
+  CURRENT_ROLE = null;
+  CURRENT_UID = null;
+  if(fbAuth.currentUser){ fbAuth.signOut(); } // clears Firebase's remembered Google sign-in (Admin or Participant)
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-page').style.display = 'flex';
+});
+
+document.getElementById('menu-toggle').addEventListener('click', ()=>{
+  document.getElementById('sidebar').classList.toggle('open');
+});
+
+/* ============================================================
+   ROUTER
+   ============================================================ */
+const VIEW_TITLES = {
+  dashboard:'Dashboard', customers:'Customers', transactions:'Credit Transactions',
+  payments:'Payments', reports:'Reports', faq:'FAQs / Help', settings:'Settings',
+  // Admin Panel views
+  admindashboard:'Admin Dashboard', manageusers:'Manage Users', organizations:'Organizations / Companies',
+  systemanalytics:'System Analytics', activitylogs:'Activity Logs', accessroles:'Access & Roles',
+  systemreports:'System Reports', adminnotifications:'Notifications', systemsettings:'System Settings',
+  security:'Security', adminhelp:'Help'
+};
+const RENDERERS = {
+  dashboard: renderDashboard, customers: renderCustomers, transactions: renderTransactions,
+  payments: renderPayments, reports: renderReports, faq: renderFAQ, settings: renderSettings,
+  // Admin Panel views
+  admindashboard: renderAdminDashboard, manageusers: renderManageUsers, organizations: renderOrganizations,
+  systemanalytics: renderSystemAnalytics, activitylogs: renderActivityLogs, accessroles: renderAccessRoles,
+  systemreports: renderSystemReports, adminnotifications: renderAdminNotifications, systemsettings: renderSystemSettings,
+  security: renderSecurity, adminhelp: renderAdminHelp
+};
+
+document.querySelectorAll('.sidebar-nav .nav-item').forEach(item=>{
+  item.addEventListener('click', ()=> showView(item.dataset.view));
+});
+
+function showView(name){
+  document.querySelectorAll('.sidebar-nav .nav-item').forEach(n=>n.classList.toggle('active', n.dataset.view===name));
+  document.getElementById('topbar-title').textContent = VIEW_TITLES[name];
+  document.getElementById('sidebar').classList.remove('open');
+  const content = document.getElementById('content');
+  content.innerHTML = `<div class="view active" id="view-${name}"></div>`;
+  RENDERERS[name](document.getElementById('view-'+name));
+  window.scrollTo(0,0);
+}
+
+/* ============================================================
+   TOAST NOTIFICATIONS
+   ============================================================ */
+function showToast(type, message){
+  const icons = {
+    success:'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+    error:'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>',
+    warn:'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>'
+  };
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.innerHTML = icons[type] + '<span>' + message + '</span>';
+  document.getElementById('toast-wrap').appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateX(30px)'; el.style.transition='all .25s'; setTimeout(()=>el.remove(),250); }, 3200);
+}
+
+/* ============================================================
+   MODAL HELPERS
+   ============================================================ */
+function openModal(html, wide=false){
+  const modal = document.getElementById('modal');
+  modal.className = 'modal' + (wide ? ' wide':'');
+  modal.innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('active');
+}
+function closeModal(){ document.getElementById('modal-overlay').classList.remove('active'); }
+document.getElementById('modal-overlay').addEventListener('click', (e)=>{ if(e.target.id==='modal-overlay') closeModal(); });
+
+function confirmAction(title, message, onConfirm){
+  openModal(`
+    <div class="modal-head"><h3>${title}</h3><div class="modal-close" onclick="closeModal()">&times;</div></div>
+    <div class="modal-body confirm-box"><p>${message}</p></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" id="confirm-yes-btn">Yes, Continue</button>
+    </div>
+  `);
+  document.getElementById('confirm-yes-btn').addEventListener('click', ()=>{ onConfirm(); closeModal(); });
+}
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+function renderDashboard(el){
+  const customers = db('customers');
+  const transactions = db('transactions');
+  const payments = db('payments');
+
+  const totalReceivables = transactions.reduce((s,t)=>s+t.total,0);
+  const collected = transactions.reduce((s,t)=>s+txnPaidAmount(t.id),0);
+  const totalPenalties = transactions.reduce((s,t)=>s+txnInterestAdded(t),0);
+  const outstanding = transactions.reduce((s,t)=>s+txnRemaining(t),0);
+  const overdueTxns = transactions.filter(t=>txnStatus(t)==='Overdue');
+
+  const recent = [...transactions].sort((a,b)=> new Date(b.date)-new Date(a.date)).slice(0,6);
+
+  el.innerHTML = `
+    <div class="view-header">
+      <div><h1>Welcome back, ${session().name.split(' ')[0]}</h1><p>Here's what's happening with your credit accounts today.</p></div>
+    </div>
+    <div class="grid-4">
+      <div class="stat-card"><div class="icon" style="background:var(--green-light);color:var(--green-dark);">${svgUsers()}</div><div class="label">Total Customers</div><div class="value">${customers.length}</div><div class="delta up">${customers.filter(c=>c.status==='Active').length} active</div></div>
+      <div class="stat-card"><div class="icon" style="background:#e7edff;color:#2f4fd1;">${svgReceipt()}</div><div class="label">Total Receivables</div><div class="value">${fmtMoney(totalReceivables)}</div><div class="delta up">${transactions.length} transactions</div></div>
+      <div class="stat-card"><div class="icon" style="background:var(--green-light);color:var(--green-dark);">${svgCoins()}</div><div class="label">Collected Payments</div><div class="value">${fmtMoney(collected)}</div><div class="delta up">${payments.length} payments logged</div></div>
+      <div class="stat-card"><div class="icon" style="background:#fdeceb;color:var(--red);">${svgAlert()}</div><div class="label">Outstanding Balance</div><div class="value">${fmtMoney(outstanding)}</div><div class="delta down">${totalPenalties>0?`Includes ${fmtMoney(totalPenalties)} overdue interest`:'Needs collection'}</div></div>
+    </div>
+    <div class="grid-3">
+      <div class="stat-card" style="border-color:${overdueTxns.length>0?'#f3c9c5':'var(--gray-100)'};"><div class="icon" style="background:#fdeceb;color:var(--red);">${svgAlert()}</div><div class="label">Total Overdue Debts</div><div class="value" style="${overdueTxns.length>0?'color:var(--red);':''}">${overdueTxns.length}</div><div class="delta down">${overdueTxns.length>0?'Accruing daily interest':'None overdue'}</div></div>
+      <div class="stat-card"><div class="icon" style="background:#fdeceb;color:var(--red);">${svgCoins()}</div><div class="label">Total Interest Added</div><div class="value" style="color:var(--red);">${fmtMoney(totalPenalties)}</div><div class="delta down">From overdue accounts</div></div>
+      <div class="stat-card"><div class="icon" style="background:#e7edff;color:#2f4fd1;">${svgReceipt()}</div><div class="label">Total Outstanding Balance</div><div class="value">${fmtMoney(outstanding)}</div><div class="delta down">Principal + accrued interest</div></div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="card"><h3>Monthly Collections</h3><canvas id="chart-line"></canvas></div>
+      <div class="card"><h3>Account Status Breakdown</h3><canvas id="chart-pie"></canvas></div>
+    </div>
+    <div class="card" style="margin-bottom:24px;"><h3>Transactions by Status</h3><canvas id="chart-bar"></canvas></div>
+
+    <div class="card">
+      <h3>Recent Transactions</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Txn #</th><th>Customer</th><th>Date</th><th>Total</th><th>Status</th></tr></thead>
+        <tbody>
+          ${recent.map(t=>`<tr><td>${t.txn_no}</td><td>${customerName(t.customer_id)}</td><td>${fmtDate(t.date)}</td><td>${fmtMoney(t.total)}</td><td>${badge(txnStatus(t))}</td></tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--gray-400);padding:20px;">No transactions yet.</td></tr>'}
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="card" style="margin-top:24px;">
+      <h3>Customer List</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Full Name</th><th>Phone</th><th>Status</th><th>Outstanding Balance</th></tr></thead>
+        <tbody>
+          ${customers.map(c=>{
+            const bal = transactions.filter(t=>t.customer_id===c.id).reduce((s,t)=>s+txnRemaining(t),0);
+            return `<tr><td>${c.name}</td><td>${c.phone}</td><td>${badge(c.status)}</td><td>${fmtMoney(bal)}</td></tr>`;
+          }).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--gray-400);padding:20px;">No customers yet — add your first customer to get started.</td></tr>'}
+        </tbody>
+      </table></div>
+    </div>
+  `;
+
+  // Line chart: last 6 months collections
+  const months = [];
+  const collByMonth = [];
+  for(let i=5;i>=0;i--){
+    const d = new Date(); d.setMonth(d.getMonth()-i);
+    const label = d.toLocaleString('en-US',{month:'short'});
+    months.push(label);
+    const y = d.getFullYear(), m = d.getMonth();
+    const sum = payments.filter(p=>{ const pd=new Date(p.date); return pd.getFullYear()===y && pd.getMonth()===m; }).reduce((s,p)=>s+p.amount,0);
+    collByMonth.push(sum);
+  }
+  new Chart(document.getElementById('chart-line'), {
+    type:'line',
+    data:{ labels:months, datasets:[{label:'Collected', data:collByMonth, borderColor:'#35B56A', backgroundColor:'rgba(53,181,106,0.12)', tension:.35, fill:true, pointRadius:3}] },
+    options:{ plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, ticks:{callback:v=>'\u20B1'+v}}} }
+  });
+
+  // Pie: status
+  const statusCounts = {Paid:0,Partial:0,Unpaid:0,Overdue:0};
+  transactions.forEach(t=> statusCounts[txnStatus(t)]++ );
+  new Chart(document.getElementById('chart-pie'), {
+    type:'doughnut',
+    data:{ labels:Object.keys(statusCounts), datasets:[{data:Object.values(statusCounts), backgroundColor:['#35B56A','#e0a13e','#e0483e','#8a1c14']}] },
+    options:{ plugins:{legend:{position:'bottom', labels:{boxWidth:11,font:{size:11}}}} }
+  });
+
+  // Bar: transactions by status
+  new Chart(document.getElementById('chart-bar'), {
+    type:'bar',
+    data:{ labels:['Paid','Partial','Unpaid','Overdue'], datasets:[{label:'Transactions', data:[statusCounts.Paid,statusCounts.Partial,statusCounts.Unpaid,statusCounts.Overdue], backgroundColor:['#35B56A','#e0a13e','#e0483e','#8a1c14'], borderRadius:6}] },
+    options:{ plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
+  });
+}
+function badge(status){
+  const cls = status.toLowerCase();
+  return `<span class="badge ${cls}">${status}</span>`;
+}
+function svgUsers(){ return '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>'; }
+function svgReceipt(){ return '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0c1.1.128 1.907 1.077 1.907 2.185zM9.75 9h.008v.008H9.75V9zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 4.5h.008v.008h-.008V13.5zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>'; }
+function svgCoins(){ return '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'; }
+function svgAlert(){ return '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>'; }
+function svgEdit(){ return '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/></svg>'; }
+function svgTrash(){ return '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>'; }
+
+/* ============================================================
+   CUSTOMERS
+   ============================================================ */
+let custState = { search:'', sortKey:'name', sortDir:1, page:1, perPage:8 };
+
+function renderCustomers(el){
+  el.innerHTML = `
+    <div class="view-header">
+      <div><h1>Customers</h1><p>Manage customer records — add, edit, search, and review account status.</p></div>
+      <button class="btn btn-primary" onclick="openCustomerModal()">${svgPlus()} Add Customer</button>
+    </div>
+    <div class="card">
+      <div class="table-toolbar">
+        <div class="search-box">${svgSearch()}<input type="text" id="cust-search" placeholder="Search customers..." value="${custState.search}"></div>
+        <div style="font-size:12.5px;color:var(--gray-600);" id="cust-count"></div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th class="sortable" data-key="id">ID</th>
+          <th class="sortable" data-key="name">Full Name</th>
+          <th>Phone</th><th>Address</th><th>Email</th>
+          <th class="sortable" data-key="status">Status</th>
+          <th class="sortable" data-key="date_added">Date Added</th>
+          <th>Actions</th>
+        </tr></thead>
+        <tbody id="cust-tbody"></tbody>
+      </table></div>
+      <div class="pagination" id="cust-pagination"></div>
+    </div>
+  `;
+  document.getElementById('cust-search').addEventListener('input', (e)=>{ custState.search=e.target.value; custState.page=1; renderCustTable(); });
+  document.querySelectorAll('#view-customers th.sortable').forEach(th=>{
+    th.addEventListener('click', ()=>{
+      const key = th.dataset.key;
+      custState.sortDir = custState.sortKey===key ? -custState.sortDir : 1;
+      custState.sortKey = key;
+      renderCustTable();
+    });
+  });
+  renderCustTable();
+}
+
+function renderCustTable(){
+  let rows = db('customers').filter(c=>{
+    const s = custState.search.toLowerCase();
+    return !s || c.name.toLowerCase().includes(s) || c.phone.includes(s) || c.email.toLowerCase().includes(s) || c.address.toLowerCase().includes(s);
+  });
+  rows.sort((a,b)=>{
+    const k = custState.sortKey;
+    if(a[k] < b[k]) return -1*custState.sortDir;
+    if(a[k] > b[k]) return 1*custState.sortDir;
+    return 0;
+  });
+  const total = rows.length;
+  const totalPages = Math.max(1, Math.ceil(total/custState.perPage));
+  custState.page = Math.min(custState.page, totalPages);
+  const start = (custState.page-1)*custState.perPage;
+  const pageRows = rows.slice(start, start+custState.perPage);
+
+  document.getElementById('cust-count').textContent = `${total} customer${total!==1?'s':''} found`;
+  document.getElementById('cust-tbody').innerHTML = pageRows.map(c=>`
+    <tr>
+      <td>#${c.id}</td>
+      <td><b>${c.name}</b></td>
+      <td>${c.phone}</td>
+      <td>${c.address}</td>
+      <td>${c.email}</td>
+      <td>${badge(c.status)}</td>
+      <td>${fmtDate(c.date_added)}</td>
+      <td><div class="row-actions">
+        <div class="icon-btn edit" onclick="openCustomerModal(${c.id})">${svgEdit()}</div>
+        <div class="icon-btn del" onclick="deleteCustomer(${c.id})">${svgTrash()}</div>
+      </div></td>
+    </tr>
+  `).join('') || `<tr><td colspan="8" style="text-align:center;color:var(--gray-400);padding:26px;">No customers found.</td></tr>`;
+
+  const pager = document.getElementById('cust-pagination');
+  let pageBtns = '';
+  for(let i=1;i<=totalPages;i++){ pageBtns += `<button class="${i===custState.page?'active':''}" onclick="custState.page=${i};renderCustTable();">${i}</button>`; }
+  pager.innerHTML = `<div>Page ${custState.page} of ${totalPages}</div><div class="pages">${pageBtns}</div>`;
+}
+
+function openCustomerModal(id){
+  const editing = !!id;
+  const c = editing ? db('customers').find(x=>x.id===id) : {name:'',phone:'',address:'',email:'',status:'Active',notes:''};
+  openModal(`
+    <div class="modal-head"><h3>${editing?'Edit Customer':'Add Customer'}</h3><div class="modal-close" onclick="closeModal()">&times;</div></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field full"><label>Full Name</label><input id="f-name" value="${c.name}" placeholder="Juan Dela Cruz"></div>
+        <div class="form-field"><label>Phone Number</label><input id="f-phone" value="${c.phone}" placeholder="0917xxxxxxx"></div>
+        <div class="form-field"><label>Email</label><input id="f-email" value="${c.email}" placeholder="name@mail.com"></div>
+        <div class="form-field full"><label>Address</label><input id="f-address" value="${c.address}" placeholder="Street, Barangay"></div>
+        <div class="form-field"><label>Status</label>
+          <select id="f-status"><option ${c.status==='Active'?'selected':''}>Active</option><option ${c.status==='Inactive'?'selected':''}>Inactive</option></select>
+        </div>
+        <div class="form-field full"><label>Notes (optional)</label><input id="f-notes" value="${c.notes||''}" placeholder="Any additional notes about this customer"></div>
+        ${editing ? '' : `
+        <div class="form-field"><label>Initial Debt / Amount Borrowed (optional)</label><input type="number" id="f-initial-debt" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="form-field"><label>Due Date (if adding a debt)</label><input type="date" id="f-initial-due" value="${todayISO(30)}"></div>
+        <div class="form-field full"><div class="form-hint">Leave the amount blank or at 0 to add the customer with a ₱0.00 balance — you can record a debt later from Credit Transactions.</div></div>
+        `}
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCustomer(${editing?id:'null'})">${editing?'Save Changes':'Add Customer'}</button>
+    </div>
+  `);
+}
+
+function saveCustomer(id){
+  const name = document.getElementById('f-name').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const address = document.getElementById('f-address').value.trim();
+  const status = document.getElementById('f-status').value;
+  const notes = document.getElementById('f-notes').value.trim();
+  if(!name || !phone){ showToast('error','Full name and phone number are required.'); return; }
+
+  const customers = db('customers');
+  if(id){
+    const idx = customers.findIndex(c=>c.id===id);
+    customers[idx] = {...customers[idx], name, phone, email, address, status, notes};
+    dbSave('customers', customers);
+    showToast('success','Customer updated successfully.');
+    log(`Edited customer #${id}`);
+  } else {
+    const newId = nextId('customers');
+    customers.push({id:newId, name, phone, email, address, status, notes, date_added: todayISO()});
+    dbSave('customers', customers);
+
+    // Optional initial debt — creates the customer's first credit transaction
+    // so their balance reflects it immediately (₱0.00 if left blank).
+    const debtAmount = Math.max(0, parseFloat(document.getElementById('f-initial-debt')?.value) || 0);
+    if(debtAmount > 0){
+      const dueDate = document.getElementById('f-initial-due').value || todayISO(30);
+      const transactions = db('transactions');
+      const txnId = nextId('transactions');
+      transactions.push({
+        id: txnId, txn_no:'TXN-'+String(1000+txnId), customer_id:newId,
+        date: todayISO(), due_date: dueDate, down_payment:0,
+        items:[{product:'Initial Debt / Amount Borrowed', qty:1, price:debtAmount, total:debtAmount}],
+        total: debtAmount, interest_rate:null
+      });
+      dbSave('transactions', transactions);
+      log(`Recorded initial debt of ${fmtMoney(debtAmount)} for customer #${newId}`);
+    }
+    showToast('success','Customer added successfully.');
+    log(`Added customer #${newId}`);
+  }
+  closeModal();
+  renderCustTable();
+}
+
+function deleteCustomer(id){
+  confirmAction('Delete Customer', 'This will permanently remove this customer record. This action cannot be undone.', ()=>{
+    dbSave('customers', db('customers').filter(c=>c.id!==id));
+    log(`Deleted customer #${id}`);
+    showToast('success','Customer deleted.');
+    renderCustTable();
+  });
+}
+function svgPlus(){ return '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>'; }
+function svgSearch(){ return '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>'; }
+
+/* ============================================================
+   TRANSACTIONS
+   ============================================================ */
+let txnState = { search:'', page:1, perPage:8, lineItems:[] };
+
+function renderTransactions(el){
+  el.innerHTML = `
+    <div class="view-header">
+      <div><h1>Credit Transactions</h1><p>Record new credit sales and manage existing transactions.</p></div>
+      <button class="btn btn-primary" onclick="openTxnModal()">${svgPlus()} New Credit Sale</button>
+    </div>
+    <div class="card">
+      <div class="table-toolbar">
+        <div class="search-box">${svgSearch()}<input type="text" id="txn-search" placeholder="Search by customer or txn #..." value="${txnState.search}"></div>
+        <div style="font-size:12.5px;color:var(--gray-600);" id="txn-count"></div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Txn #</th><th>Customer</th><th>Date</th><th>Total</th><th>Down Payment</th><th>Remaining</th><th>Interest Rate</th><th>Days Overdue</th><th>Due Date</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="txn-tbody"></tbody>
+      </table></div>
+      <div class="pagination" id="txn-pagination"></div>
+    </div>
+  `;
+  document.getElementById('txn-search').addEventListener('input', (e)=>{ txnState.search=e.target.value; txnState.page=1; renderTxnTable(); });
+  renderTxnTable();
+}
+
+function renderTxnTable(){
+  let rows = db('transactions').filter(t=>{
+    const s = txnState.search.toLowerCase();
+    return !s || t.txn_no.toLowerCase().includes(s) || customerName(t.customer_id).toLowerCase().includes(s);
+  }).sort((a,b)=> new Date(b.date)-new Date(a.date));
+
+  const total = rows.length;
+  const totalPages = Math.max(1, Math.ceil(total/txnState.perPage));
+  txnState.page = Math.min(txnState.page, totalPages);
+  const start = (txnState.page-1)*txnState.perPage;
+  const pageRows = rows.slice(start, start+txnState.perPage);
+
+  document.getElementById('txn-count').textContent = `${total} transaction${total!==1?'s':''}`;
+  document.getElementById('txn-tbody').innerHTML = pageRows.map(t=>{
+    const remaining = txnRemaining(t);
+    const status = txnStatus(t);
+    const penalty = txnInterestAdded(t);
+    const daysOverdue = txnDaysOverdue(t);
+    const rowClass = status==='Overdue' ? 'style="background:#fdf1f0;"' : '';
+    return `<tr ${rowClass}>
+      <td><b>${t.txn_no}</b></td>
+      <td>${customerName(t.customer_id)}</td>
+      <td>${fmtDate(t.date)}</td>
+      <td>${fmtMoney(t.total)}</td>
+      <td>${fmtMoney(t.down_payment)}</td>
+      <td>${fmtMoney(remaining)}${penalty>0?`<div style="font-size:10.5px;color:var(--red);font-weight:600;">+${fmtMoney(penalty)} interest</div>`:''}</td>
+      <td>${interestRate(t)}%/month${t.interest_rate!=null && t.interest_rate!==''?' <span style="font-size:10px;color:var(--gray-600);">(custom)</span>':''}</td>
+      <td>${daysOverdue>0 ? `<b style="color:var(--red);">${daysOverdue} day${daysOverdue!==1?'s':''}</b>` : '—'}</td>
+      <td>${fmtDate(t.due_date)}</td>
+      <td>${badge(status)}</td>
+      <td><div class="row-actions">
+        <div class="icon-btn" onclick="openDebtDetails(${t.id})" title="View Details">${svgEye()}</div>
+        <div class="icon-btn edit" onclick="openTxnModal(${t.id})">${svgEdit()}</div>
+        <div class="icon-btn del" onclick="deleteTxn(${t.id})">${svgTrash()}</div>
+      </div></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="11" style="text-align:center;color:var(--gray-400);padding:26px;">No transactions found.</td></tr>`;
+
+  const pager = document.getElementById('txn-pagination');
+  let pageBtns = '';
+  for(let i=1;i<=totalPages;i++){ pageBtns += `<button class="${i===txnState.page?'active':''}" onclick="txnState.page=${i};renderTxnTable();">${i}</button>`; }
+  pager.innerHTML = `<div>Page ${txnState.page} of ${totalPages}</div><div class="pages">${pageBtns}</div>`;
+}
+
+function openTxnModal(id){
+  const editing = !!id;
+  const t = editing ? db('transactions').find(x=>x.id===id) : null;
+  txnState.lineItems = editing ? JSON.parse(JSON.stringify(t.items)) : [{product:PRODUCTS[0].name, qty:1, price:PRODUCTS[0].price, total:PRODUCTS[0].price}];
+  const customers = db('customers');
+
+  openModal(`
+    <div class="modal-head"><h3>${editing?'Edit Transaction':'New Credit Sale'}</h3><div class="modal-close" onclick="closeModal()">&times;</div></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field"><label>Customer</label>
+          <select id="f-customer">${customers.map(c=>`<option value="${c.id}" ${editing && t.customer_id===c.id?'selected':''}>${c.name}</option>`).join('')}</select>
+        </div>
+        <div class="form-field"><label>Transaction Date</label><input type="date" id="f-date" value="${editing?t.date:todayISO()}"></div>
+        <div class="form-field"><label>Down Payment</label><input type="number" id="f-down" value="${editing?t.down_payment:0}" min="0" oninput="recalcTxnTotals()"></div>
+        <div class="form-field"><label>Due Date</label><input type="date" id="f-due" value="${editing?t.due_date:todayISO(30)}"></div>
+        <div class="form-field full"><label>Interest Rate Override (% per month, optional)</label>
+          <input type="number" id="f-interest-rate" step="0.1" min="0" value="${editing && t.interest_rate!=null?t.interest_rate:''}" placeholder="Leave blank to use default rate (${defaultInterestRate()}%/month)">
+          <div class="form-hint">Only set this if this specific debt should use a different rate than the admin default.</div>
+        </div>
+      </div>
+
+      <div class="form-field full">
+        <label>Products</label>
+        <div class="line-items"><table>
+          <thead><tr><th style="width:36%">Product</th><th>Qty</th><th>Price</th><th>Line Total</th><th></th></tr></thead>
+          <tbody id="line-items-body"></tbody>
+        </table></div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="addLineItem()">${svgPlus()} Add Product</button>
+      </div>
+
+      <div class="totals-box">
+        <div class="totals-row"><span>Subtotal</span><span id="t-subtotal">${fmtMoney(0)}</span></div>
+        <div class="totals-row"><span>Down Payment</span><span id="t-down">${fmtMoney(0)}</span></div>
+        <div class="totals-row grand"><span>Remaining Balance</span><span id="t-remaining">${fmtMoney(0)}</span></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTxn(${editing?id:'null'})">${editing?'Save Changes':'Save Transaction'}</button>
+    </div>
+  `, true);
+  renderLineItems();
+}
+
+function renderLineItems(){
+  document.getElementById('line-items-body').innerHTML = txnState.lineItems.map((li,i)=>`
+    <tr>
+      <td><select onchange="updateLineItem(${i},'product',this.value)">${PRODUCTS.map(p=>`<option value="${p.name}" data-price="${p.price}" ${li.product===p.name?'selected':''}>${p.name}</option>`).join('')}</select></td>
+      <td><input type="number" min="1" value="${li.qty}" oninput="updateLineItem(${i},'qty',this.value)"></td>
+      <td><input type="number" min="0" value="${li.price}" oninput="updateLineItem(${i},'price',this.value)"></td>
+      <td style="white-space:nowrap;">${fmtMoney(li.total)}</td>
+      <td><div class="icon-btn del" onclick="removeLineItem(${i})">${svgTrash()}</div></td>
+    </tr>
+  `).join('');
+  recalcTxnTotals();
+}
+function addLineItem(){
+  txnState.lineItems.push({product:PRODUCTS[0].name, qty:1, price:PRODUCTS[0].price, total:PRODUCTS[0].price});
+  renderLineItems();
+}
+function removeLineItem(i){
+  if(txnState.lineItems.length===1){ showToast('warn','A transaction needs at least one product.'); return; }
+  txnState.lineItems.splice(i,1);
+  renderLineItems();
+}
+function updateLineItem(i, field, value){
+  const li = txnState.lineItems[i];
+  if(field==='product'){
+    li.product = value;
+    const p = PRODUCTS.find(p=>p.name===value);
+    if(p) li.price = p.price;
+  } else if(field==='qty'){
+    li.qty = Math.max(1, parseInt(value)||1);
+  } else if(field==='price'){
+    li.price = Math.max(0, parseFloat(value)||0);
+  }
+  li.total = li.qty * li.price;
+  renderLineItems();
+}
+function recalcTxnTotals(){
+  const subtotal = txnState.lineItems.reduce((s,li)=>s+li.total,0);
+  const down = Math.max(0, parseFloat(document.getElementById('f-down')?.value)||0);
+  document.getElementById('t-subtotal').textContent = fmtMoney(subtotal);
+  document.getElementById('t-down').textContent = fmtMoney(down);
+  document.getElementById('t-remaining').textContent = fmtMoney(Math.max(0,subtotal-down));
+}
+
+function saveTxn(id){
+  const customer_id = parseInt(document.getElementById('f-customer').value);
+  const date = document.getElementById('f-date').value;
+  const due_date = document.getElementById('f-due').value;
+  const down_payment = Math.max(0, parseFloat(document.getElementById('f-down').value)||0);
+  const rateInput = document.getElementById('f-interest-rate').value;
+  const interest_rate = rateInput==='' ? null : Math.max(0, parseFloat(rateInput)||0);
+  const total = txnState.lineItems.reduce((s,li)=>s+li.total,0);
+  if(!date || !due_date){ showToast('error','Please set both transaction date and due date.'); return; }
+  if(down_payment > total){ showToast('error','Down payment cannot exceed the total amount.'); return; }
+
+  const transactions = db('transactions');
+  if(id){
+    const idx = transactions.findIndex(t=>t.id===id);
+    transactions[idx] = {...transactions[idx], customer_id, date, due_date, down_payment, items:txnState.lineItems, total, interest_rate};
+    showToast('success','Transaction updated.');
+    log(`Edited transaction #${id}`);
+  } else {
+    const newId = nextId('transactions');
+    transactions.push({id:newId, txn_no:'TXN-'+String(1000+newId), customer_id, date, due_date, down_payment, items:txnState.lineItems, total, interest_rate});
+    showToast('success','Credit transaction saved.');
+    log(`Created transaction #${newId}`);
+  }
+  dbSave('transactions', transactions);
+  closeModal();
+  renderTxnTable();
+}
+
+function deleteTxn(id){
+  confirmAction('Delete Transaction', 'Deleting this transaction will also remove any linked payment records. Continue?', ()=>{
+    dbSave('transactions', db('transactions').filter(t=>t.id!==id));
+    dbSave('payments', db('payments').filter(p=>p.transaction_id!==id));
+    log(`Deleted transaction #${id}`);
+    showToast('success','Transaction deleted.');
+    renderTxnTable();
+  });
+}
+
+/* ---------- DEBT DETAILS (view of a single transaction: interest breakdown + payment history) ---------- */
+function openDebtDetails(id){
+  const t = db('transactions').find(x=>x.id===id);
+  if(!t) return;
+  const basePrincipal = txnBasePrincipal(t);
+  const accrued = txnAccruedPrincipal(t);
+  const interestAdded = txnInterestAdded(t);
+  const daysOverdue = txnDaysOverdue(t);
+  const remaining = txnRemaining(t);
+  const rate = interestRate(t);
+  const status = txnStatus(t);
+  const history = db('payments').filter(p=>p.transaction_id===id).sort((a,b)=>new Date(a.date)-new Date(b.date));
+
+  openModal(`
+    <div class="modal-head"><h3>Debt Details — ${t.txn_no}</h3><div class="modal-close" onclick="closeModal()">&times;</div></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field"><label>Customer</label><input disabled value="${customerName(t.customer_id)}"></div>
+        <div class="form-field"><label>Status</label><input disabled value="${status}"></div>
+        <div class="form-field"><label>Original Amount</label><input disabled value="${fmtMoney(t.total)}"></div>
+        <div class="form-field"><label>Down Payment</label><input disabled value="${fmtMoney(t.down_payment)}"></div>
+        <div class="form-field"><label>Due Date</label><input disabled value="${fmtDate(t.due_date)}"></div>
+        <div class="form-field"><label>Days Overdue</label><input disabled value="${daysOverdue>0?daysOverdue+' day(s)':'Not overdue'}"></div>
+        <div class="form-field"><label>Interest Rate</label><input disabled value="${rate}% per month${t.interest_rate!=null && t.interest_rate!==''?' (custom rate)':' (default rate)'}"></div>
+        <div class="form-field"><label>Interest Added</label><input disabled value="${fmtMoney(interestAdded)}"></div>
+      </div>
+      <div class="totals-box">
+        <div class="totals-row"><span>Base Principal (Total − Down Payment)</span><span>${fmtMoney(basePrincipal)}</span></div>
+        <div class="totals-row"><span>Interest Added</span><span>${fmtMoney(interestAdded)}</span></div>
+        <div class="totals-row"><span>Current Amount (before payments)</span><span>${fmtMoney(accrued)}</span></div>
+        <div class="totals-row"><span>Total Paid (after down payment)</span><span>${fmtMoney(txnPaymentsSum(t))}</span></div>
+        <div class="totals-row grand"><span>Updated Total Balance</span><span>${fmtMoney(remaining)}</span></div>
+      </div>
+      <h3 style="margin-top:20px;">Payment History</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Payment #</th><th>Date</th><th>Amount</th><th>Method</th></tr></thead>
+        <tbody>
+          ${history.map(p=>`<tr><td>PMT-${String(1000+p.id)}</td><td>${fmtDate(p.date)}</td><td>${fmtMoney(p.amount)}</td><td>${p.method}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--gray-400);padding:16px;">No payments recorded yet.</td></tr>'}
+        </tbody>
+      </table></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+    </div>
+  `, true);
+}
+
+/* ============================================================
+   PAYMENTS
+   ============================================================ */
+let payState = { search:'', page:1, perPage:8, selectedCustomer:null };
+
+function renderPayments(el){
+  el.innerHTML = `
+    <div class="view-header">
+      <div><h1>Payments</h1><p>Record a payment against a customer's open transaction.</p></div>
+      <button class="btn btn-primary" onclick="openPaymentModal()">${svgPlus()} Record Payment</button>
+    </div>
+    <div class="card">
+      <div class="table-toolbar">
+        <div class="search-box">${svgSearch()}<input type="text" id="pay-search" placeholder="Search by customer..." value="${payState.search}"></div>
+        <div style="font-size:12.5px;color:var(--gray-600);" id="pay-count"></div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Payment #</th><th>Customer</th><th>Txn #</th><th>Amount</th><th>Method</th><th>Date</th><th>Actions</th></tr></thead>
+        <tbody id="pay-tbody"></tbody>
+      </table></div>
+      <div class="pagination" id="pay-pagination"></div>
+    </div>
+  `;
+  document.getElementById('pay-search').addEventListener('input', (e)=>{ payState.search=e.target.value; payState.page=1; renderPayTable(); });
+  renderPayTable();
+}
+
+function renderPayTable(){
+  let rows = db('payments').filter(p=>{
+    const s = payState.search.toLowerCase();
+    return !s || customerName(p.customer_id).toLowerCase().includes(s);
+  }).sort((a,b)=> new Date(b.date)-new Date(a.date));
+
+  const total = rows.length;
+  const totalPages = Math.max(1, Math.ceil(total/payState.perPage));
+  payState.page = Math.min(payState.page, totalPages);
+  const start = (payState.page-1)*payState.perPage;
+  const pageRows = rows.slice(start, start+payState.perPage);
+
+  document.getElementById('pay-count').textContent = `${total} payment${total!==1?'s':''}`;
+  document.getElementById('pay-tbody').innerHTML = pageRows.map(p=>{
+    const t = db('transactions').find(x=>x.id===p.transaction_id);
+    return `<tr>
+      <td>PMT-${String(1000+p.id)}</td>
+      <td>${customerName(p.customer_id)}</td>
+      <td>${t?t.txn_no:'—'}</td>
+      <td>${fmtMoney(p.amount)}</td>
+      <td>${p.method}</td>
+      <td>${fmtDate(p.date)}</td>
+      <td><div class="row-actions">
+        <div class="icon-btn" onclick="printReceipt(${p.id})" title="Print Receipt">${svgPrinter()}</div>
+        <div class="icon-btn del" onclick="deletePayment(${p.id})">${svgTrash()}</div>
+      </div></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--gray-400);padding:26px;">No payments recorded yet.</td></tr>`;
+
+  const pager = document.getElementById('pay-pagination');
+  let pageBtns = '';
+  for(let i=1;i<=totalPages;i++){ pageBtns += `<button class="${i===payState.page?'active':''}" onclick="payState.page=${i};renderPayTable();">${i}</button>`; }
+  pager.innerHTML = `<div>Page ${payState.page} of ${totalPages}</div><div class="pages">${pageBtns}</div>`;
+}
+
+function openPaymentModal(){
+  const customers = db('customers');
+  openModal(`
+    <div class="modal-head"><h3>Record Payment</h3><div class="modal-close" onclick="closeModal()">&times;</div></div>
+    <div class="modal-body">
+      <div class="form-field"><label>Customer</label>
+        <select id="p-customer" onchange="loadCustomerTxns()">
+          <option value="">Select a customer...</option>
+          ${customers.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-field"><label>Unpaid Transaction</label>
+        <select id="p-txn" onchange="loadTxnBalance()"><option value="">Select customer first...</option></select>
+      </div>
+      <div class="form-grid">
+        <div class="form-field"><label>Remaining Balance</label><input id="p-balance" disabled value="${fmtMoney(0)}"></div>
+        <div class="form-field"><label>Payment Method</label><select id="p-method"><option>Cash</option><option>GCash</option><option>Bank Transfer</option></select></div>
+      </div>
+      <div class="form-field"><label>Amount to Pay</label><input type="number" id="p-amount" min="0" placeholder="0.00"></div>
+      <div class="form-field"><label>Payment Date</label><input type="date" id="p-date" value="${todayISO()}"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="savePayment()">Save Payment</button>
+    </div>
+  `);
+}
+
+function loadCustomerTxns(){
+  const custId = parseInt(document.getElementById('p-customer').value);
+  const sel = document.getElementById('p-txn');
+  if(!custId){ sel.innerHTML = '<option value="">Select customer first...</option>'; return; }
+  const unpaid = db('transactions').filter(t=>t.customer_id===custId && txnRemaining(t)>0);
+  sel.innerHTML = unpaid.length
+    ? `<option value="">Select transaction...</option>` + unpaid.map(t=>`<option value="${t.id}">${t.txn_no} — Balance ${fmtMoney(txnRemaining(t))}</option>`).join('')
+    : `<option value="">No unpaid transactions</option>`;
+  document.getElementById('p-balance').value = fmtMoney(0);
+}
+function loadTxnBalance(){
+  const txnId = parseInt(document.getElementById('p-txn').value);
+  const t = db('transactions').find(x=>x.id===txnId);
+  document.getElementById('p-balance').value = t ? fmtMoney(txnRemaining(t)) : fmtMoney(0);
+  if(t) document.getElementById('p-amount').max = txnRemaining(t);
+}
+
+function savePayment(){
+  const customer_id = parseInt(document.getElementById('p-customer').value);
+  const transaction_id = parseInt(document.getElementById('p-txn').value);
+  const amount = parseFloat(document.getElementById('p-amount').value);
+  const method = document.getElementById('p-method').value;
+  const date = document.getElementById('p-date').value;
+
+  if(!customer_id || !transaction_id){ showToast('error','Please select a customer and transaction.'); return; }
+  if(!amount || amount<=0){ showToast('error','Enter a valid payment amount.'); return; }
+  const t = db('transactions').find(x=>x.id===transaction_id);
+  const remaining = txnRemaining(t);
+  if(amount > remaining){ showToast('error',`Amount exceeds remaining balance of ${fmtMoney(remaining)}.`); return; }
+
+  const payments = db('payments');
+  const newId = nextId('payments');
+  payments.push({id:newId, customer_id, transaction_id, amount, method, date});
+  dbSave('payments', payments);
+  log(`Recorded payment #${newId} for transaction #${transaction_id}`);
+
+  const newRemaining = remaining - amount;
+  showToast('success', newRemaining<=0 ? 'Payment recorded — account marked as Paid!' : 'Payment recorded successfully.');
+  closeModal();
+  renderPayTable();
+}
+
+function deletePayment(id){
+  confirmAction('Delete Payment', 'This will remove the payment record and restore the outstanding balance. Continue?', ()=>{
+    dbSave('payments', db('payments').filter(p=>p.id!==id));
+    log(`Deleted payment #${id}`);
+    showToast('success','Payment record deleted.');
+    renderPayTable();
+  });
+}
+
+function printReceipt(paymentId){
+  const p = db('payments').find(x=>x.id===paymentId);
+  const t = db('transactions').find(x=>x.id===p.transaction_id);
+  const biz = db('settings')[0] || {business_name:'Bayad Track', address:'', contact:''};
+  const remaining = txnRemaining(t);
+  openModal(`
+    <div class="modal-head"><h3>Receipt Preview</h3><div class="modal-close" onclick="closeModal()">&times;</div></div>
+    <div class="modal-body">
+      <div class="receipt" id="receipt-print-area">
+        <h2>${biz.business_name}</h2>
+        <div class="sub">${biz.address} &nbsp;|&nbsp; ${biz.contact}</div>
+        <table style="width:100%;margin-bottom:10px;">
+          <tr><td>Receipt No.</td><td style="text-align:right;">PMT-${String(1000+p.id)}</td></tr>
+          <tr><td>Date</td><td style="text-align:right;">${fmtDate(p.date)}</td></tr>
+          <tr><td>Customer</td><td style="text-align:right;">${customerName(p.customer_id)}</td></tr>
+          <tr><td>Transaction</td><td style="text-align:right;">${t.txn_no}</td></tr>
+          <tr><td>Method</td><td style="text-align:right;">${p.method}</td></tr>
+        </table>
+        <hr style="border:none;border-top:1px dashed var(--gray-300);margin:10px 0;">
+        <table style="width:100%;">
+          <tr class="total-line"><td>Amount Paid</td><td style="text-align:right;">${fmtMoney(p.amount)}</td></tr>
+          <tr><td>Remaining Balance</td><td style="text-align:right;">${fmtMoney(remaining)}</td></tr>
+        </table>
+        <p style="margin-top:16px;font-size:11px;color:var(--gray-400);">This is a demo receipt generated by Bayad Track for research purposes only.</p>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+      <button class="btn btn-primary" onclick="window.print()">${svgPrinter()} Print</button>
+    </div>
+  `);
+}
+function svgPrinter(){ return '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0M6.72 13.829a48.822 48.822 0 013.878-.512m10.56 0c-.24.03-.48.062-.72.096m.72-.096v-4.5a2.25 2.25 0 00-2.25-2.25H7.5a2.25 2.25 0 00-2.25 2.25v4.5m10.5 0a48.658 48.658 0 00-10.5 0m10.5 0a2.25 2.25 0 012.25 2.25v5.25a2.25 2.25 0 01-2.25 2.25H7.5a2.25 2.25 0 01-2.25-2.25v-5.25a2.25 2.25 0 012.25-2.25"/></svg>'; }
+function svgEye(){ return '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>'; }
+
+/* ============================================================
+   REPORTS
+   ============================================================ */
+let reportTab = 'balances';
+
+function renderReports(el){
+  el.innerHTML = `
+    <div class="view-header">
+      <div><h1>Reports</h1><p>Generate and export account and collection reports.</p></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" onclick="exportCSV()">${svgDownload()} Export CSV</button>
+      </div>
+    </div>
+    <div class="tabs" id="report-tabs">
+      ${['balances','paid','unpaid','monthly','weekly','history'].map(k=>`<div class="tab-btn ${reportTab===k?'active':''}" data-tab="${k}">${reportLabel(k)}</div>`).join('')}
+    </div>
+    <div class="card"><div id="report-body"></div></div>
+  `;
+  document.querySelectorAll('#report-tabs .tab-btn').forEach(b=>{
+    b.addEventListener('click', ()=>{ reportTab=b.dataset.tab; renderReports(el); });
+  });
+  renderReportBody();
+}
+function reportLabel(k){
+  return {balances:'Customer Balances', paid:'Paid Accounts', unpaid:'Unpaid Accounts', monthly:'Monthly Collections', weekly:'Weekly Collections', history:'Payment History'}[k];
+}
+
+function renderReportBody(){
+  const body = document.getElementById('report-body');
+  const customers = db('customers');
+  const transactions = db('transactions');
+  const payments = db('payments');
+
+  if(reportTab==='balances'){
+    body.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Customer</th><th>Total Credit</th><th>Paid</th><th>Interest Accrued</th><th>Balance</th><th>Status</th></tr></thead><tbody>
+      ${customers.map(c=>{
+        const txns = transactions.filter(t=>t.customer_id===c.id);
+        if(txns.length===0) return '';
+        const totalCredit = txns.reduce((s,t)=>s+t.total,0);
+        const paid = txns.reduce((s,t)=>s+txnPaidAmount(t.id),0);
+        const interest = txns.reduce((s,t)=>s+txnPenalty(t),0);
+        const bal = txns.reduce((s,t)=>s+txnRemaining(t),0);
+        const anyOverdue = txns.some(t=>txnStatus(t)==='Overdue');
+        return `<tr><td>${c.name}</td><td>${fmtMoney(totalCredit)}</td><td>${fmtMoney(paid)}</td><td>${interest>0?`<b style="color:var(--red);">${fmtMoney(interest)}</b>`:fmtMoney(0)}</td><td>${fmtMoney(bal)}</td><td>${badge(bal<=0?'Paid':(anyOverdue?'Overdue':(paid>0?'Partial':'Unpaid')))}</td></tr>`;
+      }).join('')}
+    </tbody></table></div>`;
+  } else if(reportTab==='paid' || reportTab==='unpaid'){
+    const filtered = transactions.filter(t=> reportTab==='paid' ? txnStatus(t)==='Paid' : txnStatus(t)!=='Paid');
+    body.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Txn #</th><th>Customer</th><th>Date</th><th>Total</th><th>Interest Rate</th><th>Interest</th><th>Remaining</th><th>Status</th></tr></thead><tbody>
+      ${filtered.map(t=>{ const pen = txnInterestAdded(t); return `<tr><td>${t.txn_no}</td><td>${customerName(t.customer_id)}</td><td>${fmtDate(t.date)}</td><td>${fmtMoney(t.total)}</td><td>${pen>0?interestRate(t)+'%/month':'—'}</td><td>${pen>0?fmtMoney(pen):'—'}</td><td>${fmtMoney(txnRemaining(t))}</td><td>${badge(txnStatus(t))}</td></tr>`; }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--gray-400);padding:20px;">No records.</td></tr>'}
+    </tbody></table></div>`;
+  } else if(reportTab==='monthly' || reportTab==='weekly'){
+    const map = {};
+    payments.forEach(p=>{
+      const d = new Date(p.date);
+      let key;
+      if(reportTab==='monthly'){ key = d.toLocaleString('en-US',{month:'long',year:'numeric'}); }
+      else { const onejan = new Date(d.getFullYear(),0,1); const week = Math.ceil((((d-onejan)/86400000)+onejan.getDay()+1)/7); key = `Week ${week}, ${d.getFullYear()}`; }
+      map[key] = (map[key]||0) + p.amount;
+    });
+    const entries = Object.entries(map).sort((a,b)=>b[0]<a[0]?1:-1);
+    body.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Period</th><th>Total Collected</th></tr></thead><tbody>
+      ${entries.map(([k,v])=>`<tr><td>${k}</td><td>${fmtMoney(v)}</td></tr>`).join('') || '<tr><td colspan="2" style="text-align:center;color:var(--gray-400);padding:20px;">No payment history yet.</td></tr>'}
+    </tbody></table></div>`;
+  } else if(reportTab==='history'){
+    const rows = [...payments].sort((a,b)=>new Date(b.date)-new Date(a.date));
+    body.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Payment #</th><th>Customer</th><th>Amount</th><th>Method</th><th>Date</th></tr></thead><tbody>
+      ${rows.map(p=>`<tr><td>PMT-${String(1000+p.id)}</td><td>${customerName(p.customer_id)}</td><td>${fmtMoney(p.amount)}</td><td>${p.method}</td><td>${fmtDate(p.date)}</td></tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--gray-400);padding:20px;">No payments yet.</td></tr>'}
+    </tbody></table></div>`;
+  }
+}
+
+function exportCSV(){
+  let rows = [];
+  const customers = db('customers'), transactions = db('transactions'), payments = db('payments');
+  if(reportTab==='balances'){
+    rows.push(['Customer','Total Credit','Paid','Balance']);
+    customers.forEach(c=>{
+      const txns = transactions.filter(t=>t.customer_id===c.id);
+      if(!txns.length) return;
+      const totalCredit = txns.reduce((s,t)=>s+t.total,0);
+      const paid = txns.reduce((s,t)=>s+txnPaidAmount(t.id),0);
+      rows.push([c.name, totalCredit, paid, totalCredit-paid]);
+    });
+  } else if(reportTab==='history'){
+    rows.push(['Payment #','Customer','Amount','Method','Date']);
+    payments.forEach(p=> rows.push([`PMT-${1000+p.id}`, customerName(p.customer_id), p.amount, p.method, p.date]));
+  } else {
+    rows.push(['Txn #','Customer','Date','Total','Remaining','Status']);
+    transactions.forEach(t=> rows.push([t.txn_no, customerName(t.customer_id), t.date, t.total, txnRemaining(t), txnStatus(t)]));
+  }
+  const csv = rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `bayadtrack-${reportTab}-${todayISO()}.csv`;
+  link.click();
+  showToast('success','Report exported as CSV. (PDF/Excel export is simulated in this demo.)');
+}
+function svgDownload(){ return '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>'; }
+
+/* ============================================================
+   FAQ / HELP
+   ============================================================ */
+function renderFAQ(el){
+  const faqs = [
+    ['What is Bayad Track?', 'Bayad Track is a credit and debt tracking prototype built for wholesale supply businesses to manage customer accounts, credit sales, and payments in one place.'],
+    ['How do I record a new credit sale?', 'Go to Credit Transactions → New Credit Sale, select the customer, add the products purchased, set any down payment, and save. The remaining balance is calculated automatically.'],
+    ['How do I collect a payment?', 'Go to Payments → Record Payment, choose the customer, pick the open transaction, and enter the amount. The balance updates automatically and the account is marked Paid once it reaches zero.'],
+    ['Can I print a receipt?', 'Yes — every payment record has a printer icon that opens a printable receipt preview.'],
+    ['Is this connected to a real database?', 'Yes — every account signs in with Google, and each user\'s customers, transactions, and payments are stored in Firebase Firestore under that account\'s own uid, kept separate from every other account.'],
+    ['How do I export reports?', 'Open the Reports module, choose a report tab, and click Export CSV. PDF and Excel export are simulated for this research demo.'],
+  ];
+  el.innerHTML = `
+    <div class="view-header"><div><h1>FAQs / Help</h1><p>Answers to common questions about using Bayad Track.</p></div></div>
+    <div class="card">
+      ${faqs.map(([q,a])=>`<div class="faq-item"><h4>${q}</h4><p>${a}</p></div>`).join('')}
+    </div>
+  `;
+}
+
+/* ============================================================
+   ADMIN PANEL — shared data helpers
+   Every Admin Panel view below reads from two top-level Firestore
+   collections only: "users" (account profiles — name, email, photo,
+   role, status, dates) and "system_activity" (the cross-account
+   activity feed written by logGlobalActivity(), above). Neither
+   collection ever contains a Participant's private customers,
+   credit transactions, or payments — those stay in each account's
+   own users/{uid}/data/* documents, which the Admin is never
+   granted access to (see the Firestore rules in the FIREBASE
+   CONFIGURATION comment near the top of this file). All numbers
+   shown across the Admin Panel are computed live from these two
+   collections — nothing here is hardcoded or simulated.
+   ============================================================ */
+async function fetchAllUsers(){
+  const snap = await fbStore.collection('users').get();
+  return snap.docs.map(d=>d.data());
+}
+async function fetchSystemActivity(max=300){
+  const snap = await fbStore.collection('system_activity').orderBy('at','desc').limit(max).get();
+  return snap.docs.map(d=>({id:d.id, ...d.data()}));
+}
+function isSameDay(iso, ref){
+  if(!iso) return false;
+  const d = new Date(iso), r = ref || new Date();
+  return d.getFullYear()===r.getFullYear() && d.getMonth()===r.getMonth() && d.getDate()===r.getDate();
+}
+function fmtDateTime(iso){
+  if(!iso) return '—';
+  return new Date(iso).toLocaleString('en-US',{year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+}
+function svgCheck(){ return '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'; }
+function svgUserOff(){ return '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3M4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>'; }
+function svgLogin(){ return '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l3 3m0 0l-3 3m3-3H2.25"/></svg>'; }
+function svgBolt(){ return '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>'; }
+function svgShield(){ return '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>'; }
+function svgBuilding(){ return '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>'; }
+function svgKey(){ return '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/></svg>'; }
+function svgBell(){ return '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>'; }
+
+/* ============================================================
+   ADMIN DASHBOARD
+   System-level overview — registered/active/inactive/new users,
+   today's logins, and today's system activity. Every number here
+   is computed live from the "users" and "system_activity"
+   Firestore collections (zero when there is no data yet).
+   ============================================================ */
+function renderAdminDashboard(el){
+  el.innerHTML = `
+    <div class="view-header"><div><h1>Admin Dashboard</h1><p>System-wide overview of Bayad Track — accounts and activity, not participant debt data.</p></div></div>
+    <div id="admin-dash-body"><p style="color:var(--gray-400);font-size:13px;">Loading system data…</p></div>
+  `;
+  loadAdminDashboard();
+}
+async function loadAdminDashboard(){
+  const body = document.getElementById('admin-dash-body');
+  if(!body) return;
+  try{
+    const [users, activity] = await Promise.all([fetchAllUsers(), fetchSystemActivity(500)]);
+    const now = new Date();
+    const registered = users.length;
+    const active = users.filter(u=>u.status!=='Inactive').length;
+    const inactive = users.filter(u=>u.status==='Inactive').length;
+    const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate()-7);
+    const newUsers = users.filter(u=> u.date_created && new Date(u.date_created) >= sevenDaysAgo).length;
+    const todaysLogins = activity.filter(a=> a.action==='Logged in' && isSameDay(a.at, now)).length;
+    const todaysActivities = activity.filter(a=> isSameDay(a.at, now)).length;
+    const recent = activity.slice(0,8);
+
+    body.innerHTML = `
+      <div class="admin-grid-6">
+        <div class="stat-card"><div class="icon" style="background:#e7edff;color:#2f4fd1;">${svgUsers()}</div><div class="label">Registered Users</div><div class="value">${registered}</div></div>
+        <div class="stat-card"><div class="icon" style="background:var(--green-light);color:var(--green-dark);">${svgCheck()}</div><div class="label">Active Users</div><div class="value">${active}</div></div>
+        <div class="stat-card"><div class="icon" style="background:var(--gray-100);color:var(--gray-600);">${svgUserOff()}</div><div class="label">Inactive Users</div><div class="value">${inactive}</div></div>
+        <div class="stat-card"><div class="icon" style="background:var(--green-light);color:var(--green-dark);">${svgPlus()}</div><div class="label">New Users</div><div class="value">${newUsers}</div><div class="delta up">Last 7 days</div></div>
+        <div class="stat-card"><div class="icon" style="background:#fff4e0;color:#a5700f;">${svgLogin()}</div><div class="label">Today's Logins</div><div class="value">${todaysLogins}</div></div>
+        <div class="stat-card"><div class="icon" style="background:#fdeceb;color:var(--red);">${svgBolt()}</div><div class="label">System Activities</div><div class="value">${todaysActivities}</div><div class="delta down">Today</div></div>
+      </div>
+      <div class="card">
+        <h3>Recent System Activity</h3>
+        <div class="activity-feed">
+          ${recent.length ? recent.map(a=>`
+            <div class="activity-row"><div class="dot"></div><div class="body">
+              <div class="action">${a.action}</div>
+              <div class="meta">${a.user_name||a.user_email||'Unknown user'} · ${fmtDateTime(a.at)}</div>
+            </div></div>
+          `).join('') : '<p style="color:var(--gray-400);font-size:13px;padding:6px 0;">No system activity recorded yet.</p>'}
+        </div>
+      </div>
+    `;
+  }catch(err){
+    console.error(err);
+    body.innerHTML = '<p style="color:var(--red);font-size:13px;">Could not load system data from Firestore.</p>';
+  }
+}
+
+/* ============================================================
+   ADMIN — MANAGE USERS
+   Lists every registered Gmail member account (name, email, photo,
+   role, active/inactive status, registration date, last login) and
+   lets Admin view, activate, or deactivate accounts. Reads/writes
+   the shared "users" directory in Firestore — this directory holds
+   profile info only, never a password (Google accounts have none
+   to display, and email/password accounts' passwords are hashed by
+   Firebase Auth and are never exposed to this app). Each member's
+   own customers/debts/payments stay in their own users/{uid}/data/*
+   documents, locked to that uid by Firestore security rules, so
+   Admin manages accounts here without reading anyone's private
+   financial records.
+   ============================================================ */
+function renderManageUsers(el){
+  el.innerHTML = `
+    <div class="view-header"><div><h1>Manage Users</h1><p>Every account registered with Bayad Track.</p></div></div>
+    <div class="card"><div id="manage-users-body"><p style="color:var(--gray-400);font-size:13px;">Loading users…</p></div></div>
+  `;
+  loadManageUsers();
+}
+async function loadManageUsers(){
+  const body = document.getElementById('manage-users-body');
+  if(!body) return;
+  try{
+    const members = (await fetchAllUsers()).filter(u=>u.role!=='admin');
+    if(members.length===0){
+      body.innerHTML = '<p style="color:var(--gray-400);font-size:13px;padding:10px 0;">No accounts have signed in yet.</p>';
+      return;
+    }
+    body.innerHTML = `<div class="table-wrap"><table><thead><tr><th></th><th>Full Name</th><th>Email</th><th>Role</th><th>Registered</th><th>Last Login</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+      ${members.map(u=>{
+        const active = u.status !== 'Inactive';
+        const avatar = u.photo_url
+          ? `<img src="${u.photo_url}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">`
+          : `<div style="width:32px;height:32px;border-radius:50%;background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--gray-600);">${(u.full_name||'?').charAt(0).toUpperCase()}</div>`;
+        return `<tr>
+          <td>${avatar}</td>
+          <td>${u.full_name}</td>
+          <td>${u.email}</td>
+          <td><span class="role-pill participant">Participant</span></td>
+          <td>${fmtDate(u.date_created)}</td>
+          <td>${u.last_login ? fmtDate(u.last_login) : '—'}</td>
+          <td>${badge(active?'Active':'Inactive')}</td>
+          <td style="white-space:nowrap;">
+            <button class="btn btn-ghost btn-sm" onclick="viewUserActivity('${u.uid}')">View</button>
+            ${active
+              ? `<button class="btn btn-danger btn-sm" onclick="toggleUserStatus('${u.uid}','Inactive')">Deactivate</button>`
+              : `<button class="btn btn-primary btn-sm" onclick="toggleUserStatus('${u.uid}','Active')">Activate</button>`}
+          </td>
+        </tr>`;
+      }).join('')}
+    </tbody></table></div>`;
+  }catch(err){
+    console.error(err);
+    body.innerHTML = '<p style="color:var(--red);font-size:13px;">Could not load users from Firestore.</p>';
+  }
+}
+async function toggleUserStatus(uid, newStatus){
+  const verb = newStatus==='Inactive' ? 'Deactivate' : 'Activate';
+  confirmAction(`${verb} User`, `This will ${verb.toLowerCase()} this participant's account. ${newStatus==='Inactive' ? 'They will not be able to sign in until reactivated.' : 'They will be able to sign in again.'} Continue?`, async ()=>{
+    try{
+      await fbStore.collection('users').doc(uid).update({ status: newStatus });
+      logGlobalActivity(`User account ${newStatus==='Inactive'?'deactivated':'activated'}`, {target_uid: uid});
+      showToast('success', `User ${verb.toLowerCase()}d.`);
+      loadManageUsers();
+    }catch(err){
+      console.error(err);
+      showToast('error','Could not update this user\'s status.');
+    }
+  });
+}
+async function viewUserActivity(uid){
+  openModal(`
+    <div class="modal-head"><h3>User Activity</h3><div class="modal-close" onclick="closeModal()">&times;</div></div>
+    <div class="modal-body" id="user-activity-body"><p style="color:var(--gray-400);font-size:13px;">Loading…</p></div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Close</button></div>
+  `, true);
+  try{
+    const [users, activity] = await Promise.all([fetchAllUsers(), fetchSystemActivity(500)]);
+    const u = users.find(x=>x.uid===uid);
+    const rows = activity.filter(a=>a.user_uid===uid).slice(0,50);
+    const body = document.getElementById('user-activity-body');
+    if(!body) return;
+    body.innerHTML = `
+      <div class="info-list" style="margin-bottom:16px;">
+        <div class="info-row"><span class="k">Name</span><span class="v">${u?.full_name||'—'}</span></div>
+        <div class="info-row"><span class="k">Email</span><span class="v">${u?.email||'—'}</span></div>
+        <div class="info-row"><span class="k">Status</span><span class="v">${badge(u?.status==='Inactive'?'Inactive':'Active')}</span></div>
+        <div class="info-row"><span class="k">Registered</span><span class="v">${fmtDate(u?.date_created)}</span></div>
+      </div>
+      <h4 style="font-size:13px;color:var(--navy);margin-bottom:8px;">Recent Activity</h4>
+      <div class="activity-feed">
+        ${rows.length ? rows.map(a=>`<div class="activity-row"><div class="dot"></div><div class="body"><div class="action">${a.action}</div><div class="meta">${fmtDateTime(a.at)}</div></div></div>`).join('') : '<p style="color:var(--gray-400);font-size:13px;">No recorded activity for this account yet.</p>'}
+      </div>
+    `;
+  }catch(err){
+    console.error(err);
+    const body = document.getElementById('user-activity-body');
+    if(body) body.innerHTML = '<p style="color:var(--red);font-size:13px;">Could not load activity.</p>';
+  }
+}
+
+/* ============================================================
+   ADMIN — ORGANIZATIONS / COMPANIES
+   Each registered account in Bayad Track represents one business
+   (Participant). Because every business's own records stay locked
+   to its own Firebase uid (data separation — see FIREBASE
+   CONFIGURATION), this view lists the registered accounts as the
+   system's organizations, using only the shared "users" profile
+   directory — it does not and cannot read into any account's
+   private customer/transaction data.
+   ============================================================ */
+function renderOrganizations(el){
+  el.innerHTML = `
+    <div class="view-header"><div><h1>Organizations / Companies</h1><p>Every business account registered with Bayad Track.</p></div></div>
+    <div class="card"><div id="orgs-body"><p style="color:var(--gray-400);font-size:13px;">Loading…</p></div></div>
+  `;
+  loadOrganizations();
+}
+async function loadOrganizations(){
+  const body = document.getElementById('orgs-body');
+  if(!body) return;
+  try{
+    const members = (await fetchAllUsers()).filter(u=>u.role!=='admin');
+    if(members.length===0){
+      body.innerHTML = '<p style="color:var(--gray-400);font-size:13px;padding:10px 0;">No organizations registered yet.</p>';
+      return;
+    }
+    body.innerHTML = `<div class="table-wrap"><table><thead><tr><th></th><th>Organization / Owner</th><th>Contact Email</th><th>Registered</th><th>Status</th></tr></thead><tbody>
+      ${members.map(u=>{
+        const active = u.status !== 'Inactive';
+        return `<tr>
+          <td>${svgBuilding()}</td>
+          <td>${u.full_name}</td>
+          <td>${u.email}</td>
+          <td>${fmtDate(u.date_created)}</td>
+          <td>${badge(active?'Active':'Inactive')}</td>
+        </tr>`;
+      }).join('')}
+    </tbody></table></div>`;
+  }catch(err){
+    console.error(err);
+    body.innerHTML = '<p style="color:var(--red);font-size:13px;">Could not load organizations from Firestore.</p>';
+  }
+}
+
+/* ============================================================
+   ADMIN — SYSTEM ANALYTICS
+   Charts built from real "users" and "system_activity" data —
+   account growth, active/inactive split, and daily activity.
+   ============================================================ */
+function renderSystemAnalytics(el){
+  el.innerHTML = `
+    <div class="view-header"><div><h1>System Analytics</h1><p>System-wide account and activity trends.</p></div></div>
+    <div id="sysan-body"><p style="color:var(--gray-400);font-size:13px;">Loading…</p></div>
+  `;
+  loadSystemAnalytics();
+}
+async function loadSystemAnalytics(){
+  const body = document.getElementById('sysan-body');
+  if(!body) return;
+  try{
+    const [users, activity] = await Promise.all([fetchAllUsers(), fetchSystemActivity(1000)]);
+    body.innerHTML = `
+      <div class="charts-grid">
+        <div class="card"><h3>Account Status Split</h3><canvas id="admin-chart-pie"></canvas></div>
+        <div class="card"><h3>Daily Activity (Last 7 Days)</h3><canvas id="admin-chart-bar"></canvas></div>
+      </div>
+      <div class="card" style="margin-bottom:24px;"><h3>New Registrations (Last 6 Months)</h3><canvas id="admin-chart-line"></canvas></div>
+    `;
+    const active = users.filter(u=>u.status!=='Inactive').length;
+    const inactive = users.filter(u=>u.status==='Inactive').length;
+    new Chart(document.getElementById('admin-chart-pie'), {
+      type:'doughnut',
+      data:{ labels:['Active','Inactive'], datasets:[{data:[active,inactive], backgroundColor:['#35B56A','#9aa7b6']}] },
+      options:{ plugins:{legend:{position:'bottom', labels:{boxWidth:11,font:{size:11}}}} }
+    });
+
+    const days = [], dayCounts = [];
+    for(let i=6;i>=0;i--){
+      const d = new Date(); d.setDate(d.getDate()-i);
+      days.push(d.toLocaleString('en-US',{weekday:'short'}));
+      dayCounts.push(activity.filter(a=>isSameDay(a.at, d)).length);
+    }
+    new Chart(document.getElementById('admin-chart-bar'), {
+      type:'bar',
+      data:{ labels:days, datasets:[{label:'Activities', data:dayCounts, backgroundColor:'#2f4fd1', borderRadius:6}] },
+      options:{ plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
+    });
+
+    const months = [], regByMonth = [];
+    for(let i=5;i>=0;i--){
+      const d = new Date(); d.setMonth(d.getMonth()-i);
+      months.push(d.toLocaleString('en-US',{month:'short'}));
+      const y=d.getFullYear(), m=d.getMonth();
+      regByMonth.push(users.filter(u=>{ if(!u.date_created) return false; const ud=new Date(u.date_created); return ud.getFullYear()===y && ud.getMonth()===m; }).length);
+    }
+    new Chart(document.getElementById('admin-chart-line'), {
+      type:'line',
+      data:{ labels:months, datasets:[{label:'New Users', data:regByMonth, borderColor:'#35B56A', backgroundColor:'rgba(53,181,106,0.12)', tension:.35, fill:true, pointRadius:3}] },
+      options:{ plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
+    });
+  }catch(err){
+    console.error(err);
+    body.innerHTML = '<p style="color:var(--red);font-size:13px;">Could not load analytics from Firestore.</p>';
+  }
+}
+
+/* ============================================================
+   ADMIN — ACTIVITY LOGS
+   Full, filterable audit trail of every logged system event —
+   logins, registrations, participant actions, and account status
+   changes — read from the "system_activity" Firestore collection.
+   ============================================================ */
+let activityLogState = { search:'' };
+function renderActivityLogs(el){
+  el.innerHTML = `
+    <div class="view-header"><div><h1>Activity Logs</h1><p>System-wide audit trail of account and usage events.</p></div></div>
+    <div class="card">
+      <div class="table-toolbar">
+        <div class="search-box">${svgSearch()}<input type="text" id="log-search" placeholder="Search by user or action..." value="${activityLogState.search}"></div>
+      </div>
+      <div id="activity-logs-body"><p style="color:var(--gray-400);font-size:13px;">Loading…</p></div>
+    </div>
+  `;
+  document.getElementById('log-search').addEventListener('input', (e)=>{ activityLogState.search = e.target.value; renderActivityLogsTable(); });
+  loadActivityLogsData();
+}
+let _activityLogsCache = [];
+async function loadActivityLogsData(){
+  try{
+    _activityLogsCache = await fetchSystemActivity(300);
+    renderActivityLogsTable();
+  }catch(err){
+    console.error(err);
+    const body = document.getElementById('activity-logs-body');
+    if(body) body.innerHTML = '<p style="color:var(--red);font-size:13px;">Could not load activity logs from Firestore.</p>';
+  }
+}
+function renderActivityLogsTable(){
+  const body = document.getElementById('activity-logs-body');
+  if(!body) return;
+  const q = activityLogState.search.toLowerCase();
+  const rows = _activityLogsCache.filter(a=>
+    !q || (a.action||'').toLowerCase().includes(q) || (a.user_name||'').toLowerCase().includes(q) || (a.user_email||'').toLowerCase().includes(q)
+  );
+  if(rows.length===0){
+    body.innerHTML = '<p style="color:var(--gray-400);font-size:13px;padding:10px 0;">No activity recorded yet.</p>';
+    return;
+  }
+  body.innerHTML = `<div class="table-wrap"><table><thead><tr><th>User</th><th>Action</th><th>Role</th><th>Date/Time</th></tr></thead><tbody>
+    ${rows.map(a=>`<tr>
+      <td>${a.user_name||'—'}<div style="font-size:11px;color:var(--gray-400);">${a.user_email||''}</div></td>
+      <td>${a.action}</td>
+      <td>${a.role==='admin'?'<span class="role-pill admin">Admin</span>':'<span class="role-pill participant">Participant</span>'}</td>
+      <td>${fmtDateTime(a.at)}</td>
+    </tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+/* ============================================================
+   ADMIN — ACCESS & ROLES
+   Read-only view of every account's role (Admin/Participant) and
+   status (Active/Inactive). The Admin role itself is never stored
+   as a user-editable field — it is recomputed from ADMIN_EMAIL on
+   every sign-in (see AUTOMATIC ROLE DETECTION above), so a
+   Participant can never promote themselves to Admin.
+   ============================================================ */
+function renderAccessRoles(el){
+  el.innerHTML = `
+    <div class="view-header"><div><h1>Access &amp; Roles</h1><p>Role and status of every account. Roles are auto-detected and cannot be self-assigned.</p></div></div>
+    <div class="card"><div id="access-roles-body"><p style="color:var(--gray-400);font-size:13px;">Loading…</p></div></div>
+  `;
+  loadAccessRoles();
+}
+async function loadAccessRoles(){
+  const body = document.getElementById('access-roles-body');
+  if(!body) return;
+  try{
+    const users = await fetchAllUsers();
+    if(users.length===0){
+      body.innerHTML = '<p style="color:var(--gray-400);font-size:13px;padding:10px 0;">No accounts registered yet.</p>';
+      return;
+    }
+    body.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th></tr></thead><tbody>
+      ${users.map(u=>`<tr>
+        <td>${u.full_name}</td>
+        <td>${u.email}</td>
+        <td>${u.role==='admin'?'<span class="role-pill admin">Admin</span>':'<span class="role-pill participant">Participant</span>'}</td>
+        <td>${badge(u.status==='Inactive'?'Inactive':'Active')}</td>
+      </tr>`).join('')}
+    </tbody></table></div>`;
+  }catch(err){
+    console.error(err);
+    body.innerHTML = '<p style="color:var(--red);font-size:13px;">Could not load roles from Firestore.</p>';
+  }
+}
+
+/* ============================================================
+   ADMIN — SYSTEM REPORTS
+   Export the same real Firestore data shown elsewhere in the
+   Admin Panel (accounts, activity) as CSV.
+   ============================================================ */
+function renderSystemReports(el){
+  el.innerHTML = `
+    <div class="view-header"><div><h1>System Reports</h1><p>Export system-wide account and activity data.</p></div></div>
+    <div class="card">
+      <h3>Registered Users</h3>
+      <p style="font-size:12.5px;color:var(--gray-600);margin-bottom:14px;">Every account's name, email, role, status, and registration date.</p>
+      <button class="btn btn-primary" onclick="exportUsersCSV()">${svgDownload()} Export Users CSV</button>
+    </div>
+    <div class="card" style="margin-top:20px;">
+      <h3>Activity Logs</h3>
+      <p style="font-size:12.5px;color:var(--gray-600);margin-bottom:14px;">The full system-wide activity trail — user, action, and timestamp.</p>
+      <button class="btn btn-primary" onclick="exportActivityCSV()">${svgDownload()} Export Activity Logs CSV</button>
+    </div>
+  `;
+}
+async function exportUsersCSV(){
+  try{
+    const users = await fetchAllUsers();
+    const rows = [['Name','Email','Role','Status','Date Created','Last Login']];
+    users.forEach(u=> rows.push([u.full_name, u.email, u.role, u.status||'Active', u.date_created||'', u.last_login||'']));
+    downloadCSV(rows, 'bayadtrack-users');
+    showToast('success','Users exported as CSV.');
+  }catch(err){ console.error(err); showToast('error','Could not export users.'); }
+}
+async function exportActivityCSV(){
+  try{
+    const activity = await fetchSystemActivity(1000);
+    const rows = [['User','Email','Role','Action','Date/Time']];
+    activity.forEach(a=> rows.push([a.user_name, a.user_email, a.role, a.action, a.at]));
+    downloadCSV(rows, 'bayadtrack-activity-logs');
+    showToast('success','Activity logs exported as CSV.');
+  }catch(err){ console.error(err); showToast('error','Could not export activity logs.'); }
+}
+function downloadCSV(rows, filenamePrefix){
+  const csv = rows.map(r=>r.map(v=>`"${(v==null?'':v)}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `${filenamePrefix}-${todayISO()}.csv`;
+  link.click();
+}
+
+/* ============================================================
+   ADMIN — NOTIFICATIONS
+   A friendly recent-activity feed (a lighter view than the full
+   Activity Logs audit table), read from the same real data.
+   ============================================================ */
+function renderAdminNotifications(el){
+  el.innerHTML = `
+    <div class="view-header"><div><h1>Notifications</h1><p>Recent account and system events.</p></div></div>
+    <div class="card"><div id="admin-notif-body"><p style="color:var(--gray-400);font-size:13px;">Loading…</p></div></div>
+  `;
+  loadAdminNotifications();
+}
+async function loadAdminNotifications(){
+  const body = document.getElementById('admin-notif-body');
+  if(!body) return;
+  try{
+    const activity = await fetchSystemActivity(30);
+    if(activity.length===0){
+      body.innerHTML = '<p style="color:var(--gray-400);font-size:13px;padding:10px 0;">No notifications yet.</p>';
+      return;
+    }
+    body.innerHTML = `<div class="activity-feed">
+      ${activity.map(a=>`<div class="activity-row"><div class="dot" style="background:${a.action.toLowerCase().includes('deactivat')?'var(--red)':'var(--green)'};"></div><div class="body">
+        <div class="action">${a.action}</div>
+        <div class="meta">${a.user_name||a.user_email||'Unknown'} · ${fmtDateTime(a.at)}</div>
+      </div></div>`).join('')}
+    </div>`;
+  }catch(err){
+    console.error(err);
+    body.innerHTML = '<p style="color:var(--red);font-size:13px;">Could not load notifications from Firestore.</p>';
+  }
+}
+
+/* ============================================================
+   ADMIN — SYSTEM SETTINGS
+   Read-only system configuration info (not participant business
+   settings — that stays on the Participant "Settings" page,
+   untouched). Values are pulled from the app's real Firebase
+   config and the ADMIN_EMAIL constant, not placeholders.
+   ============================================================ */
+function renderSystemSettings(el){
+  el.innerHTML = `
+    <div class="view-header"><div><h1>System Settings</h1><p>Core configuration for this Bayad Track deployment.</p></div></div>
+    <div class="card">
+      <h3>Deployment</h3>
+      <div class="info-list">
+        <div class="info-row"><span class="k">Admin Gmail</span><span class="v">${ADMIN_EMAIL}</span></div>
+        <div class="info-row"><span class="k">Firebase Project</span><span class="v">${firebaseConfig.projectId}</span></div>
+        <div class="info-row"><span class="k">Auth Domain</span><span class="v">${firebaseConfig.authDomain}</span></div>
+        <div class="info-row"><span class="k">Current Hostname</span><span class="v">${location.hostname}</span></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:20px;">
+      <h3>Sign-in Methods</h3>
+      <div class="info-list">
+        <div class="info-row"><span class="k">Email / Password</span><span class="v">${svgCheck()} Enabled</span></div>
+        <div class="info-row"><span class="k">Google Sign-in</span><span class="v">${svgCheck()} Enabled</span></div>
+      </div>
+    </div>
+  `;
+}
+
+/* ============================================================
+   ADMIN — SECURITY
+   A plain-language summary of the security model actually
+   implemented in this file (role detection, data separation,
+   password handling) — informational, not editable controls.
+   ============================================================ */
+function renderSecurity(el){
+  el.innerHTML = `
+    <div class="view-header"><div><h1>Security</h1><p>How Bayad Track protects accounts and data.</p></div></div>
+    <div class="card">
+      <div class="security-item"><div class="icon">${svgShield()}</div><div><h4>Admin role is never self-assignable</h4><p>The Admin role is recomputed from a fixed Gmail address every time someone signs in — it is never read from a field a user could edit, so a Participant can never promote themselves to Admin.</p></div></div>
+      <div class="security-item"><div class="icon">${svgKey()}</div><div><h4>Passwords are never exposed</h4><p>Email/password credentials are managed entirely by Firebase Authentication and are never readable by this app. Google accounts have no password for Bayad Track to see or store.</p></div></div>
+      <div class="security-item"><div class="icon">${svgBuilding()}</div><div><h4>Every account's data is isolated</h4><p>Each Participant's customers, credit transactions, and payments are stored under that account's own Firebase UID and are locked there by Firestore security rules — one Participant can never read another's records, and the Admin cannot read them either.</p></div></div>
+      <div class="security-item"><div class="icon">${svgUserOff()}</div><div><h4>Deactivated accounts are blocked at sign-in</h4><p>An account the Admin deactivates is rejected the next time it tries to sign in, with no separate ban list to maintain.</p></div></div>
+    </div>
+  `;
+}
+
+/* ============================================================
+   ADMIN — HELP
+   ============================================================ */
+function renderAdminHelp(el){
+  const faqs = [
+    ['What can the Admin account see?', 'The Admin manages the system: registered accounts, roles, and activity logs. The Admin does not automatically see any Participant\'s customers, credit transactions, or payments — those stay private to that Participant\'s account.'],
+    ['How do I deactivate a problem account?', 'Go to Manage Users, find the account, and click Deactivate. That account will be blocked from signing in until reactivated.'],
+    ['How is the Admin account determined?', 'Whichever Gmail address is configured as ADMIN_EMAIL in the app automatically becomes the Admin on sign-in. There is no separate Admin registration and no way for a Participant to request the role.'],
+    ['Where do the numbers on the Admin Dashboard come from?', 'They are computed live from the "users" and "system_activity" Firestore collections — there is no demo or hardcoded data anywhere in the Admin Panel.'],
+  ];
+  el.innerHTML = `
+    <div class="view-header"><div><h1>Help</h1><p>Answers to common questions about the Admin Panel.</p></div></div>
+    <div class="card">
+      ${faqs.map(([q,a])=>`<div class="faq-item"><h4>${q}</h4><p>${a}</p></div>`).join('')}
+    </div>
+  `;
+}
+
+/* ============================================================
+   SETTINGS
+   ============================================================ */
+function renderSettings(el){
+  const s = db('settings')[0] || {business_name:'',address:'',contact:'',currency:'PHP',interest_rate:2,auto_interest_enabled:true};
+  const enabled = s.auto_interest_enabled!=null ? !!s.auto_interest_enabled : true;
+  el.innerHTML = `
+    <div class="view-header"><div><h1>Settings</h1><p>Business information used across receipts and reports.</p></div></div>
+    <div class="card settings-form">
+      <div class="form-field"><label>Business Name</label><input id="s-name" value="${s.business_name}"></div>
+      <div class="form-field"><label>Address</label><input id="s-address" value="${s.address}"></div>
+      <div class="form-field"><label>Contact Number</label><input id="s-contact" value="${s.contact}"></div>
+      <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+    </div>
+    <div class="card settings-form" style="margin-top:20px;">
+      <h3>Overdue Interest / Penalty</h3>
+      <div class="form-field" style="display:flex;align-items:center;gap:10px;">
+        <input type="checkbox" id="s-interest-enabled" ${enabled?'checked':''} style="width:auto;">
+        <label style="margin:0;">Enable automatic overdue interest</label>
+      </div>
+      <div class="form-field">
+        <label>Default Interest Rate (% added per month overdue, compounding)</label>
+        <input type="number" id="s-interest" min="0" step="0.1" value="${s.interest_rate!=null?s.interest_rate:2}">
+        <div class="form-hint">Once a transaction's due date passes, its balance compounds monthly (pro-rated by days overdue) by this rate until fully paid. Example: ₱1,000 at 2%/month → grows toward ₱1,020 after a full month overdue, continuing to compound each additional month. Individual transactions can override this rate — see the "Interest Rate Override" field when adding or editing a credit sale.</div>
+      </div>
+      <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+    </div>
+    <div class="card" style="margin-top:20px;">
+      <h3>Danger Zone</h3>
+      <p style="font-size:12.5px;color:var(--gray-600);margin-bottom:14px;">Permanently remove every customer, credit transaction, and payment on this account, leaving the dashboard at zero.</p>
+      <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
+    </div>
+  `;
+}
+function saveSettings(){
+  const rate = Math.max(0, parseFloat(document.getElementById('s-interest').value) || 0);
+  const auto_interest_enabled = document.getElementById('s-interest-enabled').checked;
+  dbSave('settings', [{id:1, business_name:document.getElementById('s-name').value, address:document.getElementById('s-address').value, contact:document.getElementById('s-contact').value, currency:'PHP', interest_rate:rate, auto_interest_enabled}]);
+  showToast('success','Settings saved.');
+}
+function clearAllData(){
+  confirmAction('Clear All Data', 'This will permanently remove every customer, credit transaction, and payment on this account, leaving the dashboard empty. This cannot be undone. Continue?', ()=>{
+    dbSave('customers', []);
+    dbSave('transactions', []);
+    dbSave('payments', []);
+    dbSave('activity_logs', [{id:1, action:'All data cleared', at:new Date().toISOString(), user: session()?.username || session()?.email || 'system'}]);
+    showToast('success','All data cleared. Dashboard is now empty.');
+    showView('dashboard');
+  });
+}
+
+/* ==================================================
+   GITHUB PAGES READY
+   NO CHANGES REQUIRED
+   ================================================== */
+
+/* ============================================================
+   DO NOT MODIFY THIS SECTION
+   SYSTEM FUNCTIONS — INIT
+   Clears out any leftover localStorage data from older versions
+   of this prototype. Both Admin and Participant accounts now sign
+   in with Google and are restored automatically by the
+   fbAuth.onAuthStateChanged listener above once Firebase confirms
+   their sign-in state — no extra code needed here.
+   ============================================================ */
+seedIfEmpty();
+
+</script>
+</body>
+</html>
